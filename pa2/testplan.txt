@@ -1,0 +1,53 @@
+All test plan is executed when executing sl binary file.
+
+=============================================================================
+1. Test Integer List
+
+Input: Allocate memory for 10 integer numbers and put them into sorted list
+    Insert oder:
+    0   1   2   3   4   5   6   7   8   9   
+
+Expected output: 10 numbers in descending sorted order 
+    The sorted integer list is:
+    9   8   7   6   5   4   3   2   1   0
+
+=============================================================================
+2. Test Float List
+
+Input: Allocate memory for 10 floating point numbers and put them into a sorted list
+    Insert Order:
+    0.23    11  2.3 0.3 -14.23  5.1 26.00   -7  8.14    9.21
+
+Expected output: 10 float numbers in descending sorted order
+    The sorted float list is:
+    26.00   11.00   9.21    8.14    5.10    2.30    0.30    0.23    -7.00   -14.23
+
+=============================================================================
+3. Test Remove method and Iterator Consitency
+
+A sorted list of integer as test plan 1 and put them into the sorted list. Create an 
+iterator that points to the first element of the list. Then delete 4 first elements. 
+
+Input: 
+    Elements of the sorted list:
+    9   8   7   6   5   4   3   2   1   0   
+    Now, a new iterator created is pointing to: 9
+    Destroy: 9  
+    Destroy: 8  
+    Destroy: 7  
+    Destroy: 6  
+
+Expected output: 
+    Elements of the sorted list:
+    5   4   3   2   1   0   
+    The iterator is "still" pointing to: 9
+    Advance the iterator using SLNextItem(). Now it's pointing to: 5
+
+Next, we test the value in the iterator after destroying the sorted list.
+
+Input:
+    Now, we destroy the list.
+Output:
+    The iterator can return 5 using SLGetItem().
+    The next element is : null  
+

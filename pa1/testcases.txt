@@ -1,0 +1,90 @@
+pa1: tokenizer test cases
+Thanh Ngo
+Marc Tabago
+
+tc1: recognition functionality of all tokens, spaces in between, different forms of hex and float tested
+input: 
+	./tokenizer "letstesteverything : 123 0326 0xae324 0XaE324 0.123 .123"
+expected output:
+	word "letstesteverything"
+	colon ":"
+	decimal "123"
+	octal "0326"
+	hex "0xae324"
+	hex "0XaE324"
+	float "0.123"
+	float ".123"
+	
+tc2: recognition functionality of all tokens, no spaces
+input:
+	./tokenizer "somethingdifferent:0173then/0xaee324then/973then.404"
+expected output:
+	word "somethingdifferent"
+	colon ":"
+	octal "0173"
+	word "then"
+	solidus "/"
+	hex "0xaee324"
+	word "then"
+	solidus "/"
+	decimal "973"
+	word "then"
+	float ".404"
+
+tc3: escape character testing
+input:
+	./tokenizer "^V"
+expected output:
+	Error: 0x16
+
+input:
+	./tokenizer "^N"
+expected output:
+	Error: 0xe
+	
+input:
+	./tokenizer "^T"
+expected output:
+	Error: 0x14
+	
+tc4: mal input, and comment ignoring
+input:
+	./tokenizer "0x 0x/*3d*/ 0x//3d\n"
+expected output:
+	mal "0x"
+	mal "0x"
+	mal "0x"
+
+tc5: number tokens leading into a hex-esque beginning
+input:
+	./tokenizer "0340x42s"
+expected output:
+	octal "0340"
+	word "x42s"
+
+input:	
+	./tokenizer "034.0x42s"
+expected output:
+	float "034.0"
+	word "x42s"
+
+input:
+	./tokenizer "9890x42s"
+expected output:
+	decimal "9890"
+	word "x42s"
+
+tc6: hex leading into a float-esque beginning (testing for point of distinguishment)
+input:
+	./tokenizer "0x5f0.9"
+expected output:
+	hex "0x5f0"
+	float ".9"
+
+tc7: recognition of c keywords
+input:
+	./tokenizer "while if whileif"
+ expected output:
+	C-keyword "while"
+	C-keyword "if"
+	word "whileif"
