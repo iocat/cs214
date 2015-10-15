@@ -1,8 +1,14 @@
 CC = gcc 
 CFLAGS = -g -Wall
 EXE = tokenizer
-all: tokenizer.c hashtable.h
+all: tokenizer.c hashtable.o
 	$(CC) $(CFLAGS) $? -o $(EXE)
 
-tokenizer: tokenizer.c hashtable.h
+hashtable.o: hashtable.c hashtable.h
+	$(CC) $(CFLAGS) $< -c 
+
+tokenizer: tokenizer.c hashtable.o
 	$(CC) $(CFLAGS) $? -o $(EXE)
+
+clean: 
+	rm *.o
