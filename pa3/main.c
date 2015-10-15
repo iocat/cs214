@@ -7,7 +7,6 @@
 
 
 int main(int argc, char* argv[]){
-    
     int x =100;
     free(&x);
     

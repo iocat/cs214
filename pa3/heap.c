@@ -80,7 +80,7 @@ void* customMalloc(int size, char* file, int caller_line){
     // While the tracking node is non NULL
     while(temp!=NULL){
         // the node is freed
-        if( temp->isFree && temp->size > size + ENTRY_SIZE ){
+        if( temp->isFree && temp->size >= size + ENTRY_SIZE ){
             // If find a big-enough chunk and is not freed
             MemEntryPtr newEntry = (MemEntryPtr) ( ((char*)temp) + ENTRY_SIZE + size);
             //Change the node's pointers
