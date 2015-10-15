@@ -17,6 +17,7 @@ static char mem[HEAP_SIZE] = {'0'};
 
 typedef struct MemEntry MemEntry;
 typedef MemEntry* MemEntryPtr;
+
 struct MemEntry{
     // The previous entry
     MemEntryPtr prev;
@@ -26,7 +27,9 @@ struct MemEntry{
 
     // Whether the chunk of memory is freed or not
     bool isFree;
-
+    
+    // fileFree indicates the file containing the free command which frees the entry
+    char *fileFree;
     // Available size for or the size of the data
     // When isFree-d, it stores the available size for allocation
     // Otherwise, size is the size of memory allocated
@@ -39,19 +42,19 @@ static bool initialized = false;
 static MemEntryPtr head;
 
 void errorReport( char* file, int caller_line, HeapError error, void* address){
-    printf("%s:%d: error: ",file,caller_line);
+    fprintf(stderr,"%s:%d: error: ",file,caller_line);
     switch(error){
     case HEAP_MALLOC_INSUFFICIENT:
-        printf("Memory is insufficient to malloc()");
+        fprintf(stderr,"Memory is insufficient to malloc()");
         break;
     case HEAP_FREE_REDUNDANT:
-        printf("Memory @%p is already free-d.", address);
+        fprintf(stderr,"Memory @%p is already free-d.", address);
         break;
     case HEAP_FREE_NOT_ALLOCATED:
-        printf("Memory @%p is not pre-allocated.",address);
+        fprintf(stderr,"Memory @%p is not pre-allocated.",address);
         break;
     case HEAP_FREE_MIDDLE:
-        printf("Memory @%p is not the allocated one.",address);
+        fprintf(stderr,"Memory @%p is not the allocated one.",address);
         break;
     }
     printf("\n");
@@ -74,7 +77,6 @@ void* customMalloc(int size, char* file, int caller_line){
         // the node is freed
         if( temp->isFree && temp->size > size + ENTRY_SIZE ){
             // If find a big-enough chunk and is not freed
-            //  allocate memory for the next entry
             MemEntryPtr newEntry = (MemEntryPtr) ( ((char*)temp) + ENTRY_SIZE + size);
             //Change the node's pointers
             newEntry->prev = temp;
@@ -83,11 +85,10 @@ void* customMalloc(int size, char* file, int caller_line){
             if(newEntry->next!=NULL){
                 newEntry->next->prev = newEntry;
             }
-            // Make this chunk freeable
             newEntry->isFree = true; 
             //Tweak the current available size of the entry
             newEntry->size = temp->size - size - ENTRY_SIZE;
-            //  Set the current entry is not freed
+
             temp->isFree = false;
             temp->size = size;
             return (void*) ((char*) temp)+ENTRY_SIZE;
