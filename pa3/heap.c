@@ -30,6 +30,9 @@ struct MemEntry{
     
     // fileFree indicates the file containing the free command which frees the entry
     char *fileFree;
+
+    // lineFree indicates the line containing the free command which frees the entry
+    int lineFree;
     // Available size for or the size of the data
     // When isFree-d, it stores the available size for allocation
     // Otherwise, size is the size of memory allocated
@@ -45,7 +48,7 @@ void errorReport( char* file, int caller_line, HeapError error, void* address){
     fprintf(stderr,"%s:%d: error: ",file,caller_line);
     switch(error){
     case HEAP_MALLOC_INSUFFICIENT:
-        fprintf(stderr,"Memory is insufficient to malloc()");
+        fprintf(stderr,"Memory is insufficient to malloc().");
         break;
     case HEAP_FREE_REDUNDANT:
         fprintf(stderr,"Memory @%p is already free-d.", address);
@@ -67,6 +70,8 @@ void* customMalloc(int size, char* file, int caller_line){
         head->prev = NULL;
         head->next = NULL;
         head->isFree = true;
+        head->fileFree = NULL;
+        head->lineFree = 0;
         head->size = HEAP_SIZE - ENTRY_SIZE;
         initialized = true;
     }
@@ -116,10 +121,13 @@ void customFree(void* data, char* file, int caller_line){
                 if(temp->isFree==true){
                     // MEMORY WAS FREED - REDUNDANTLY FREE THE MEMORY
                     errorReport(file,caller_line,HEAP_FREE_REDUNDANT,data);
+                    fprintf(stderr,"\tDid you free it at line %d in %s ?\n",temp->lineFree,temp->fileFree);
                     return;
                 }else{  
                     // FREE THE MEMORY
                     temp->isFree = true;
+                    temp->fileFree = file;
+                    temp->lineFree = caller_line;
                     // Merge it with previous free chunked
                     if(temp->prev!=NULL && temp->prev->isFree){
                         //Expand the available size of the previous node
