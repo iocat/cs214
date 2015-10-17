@@ -1,0 +1,55 @@
+Test cases:
+Demonstrated in main.c
+
+---------------------------------------------------------
+1st: Free pointers that were not allocated by malloc
+
+Input:
+11    int x;
+12    free(&x);
+
+Expected output:
+   main.c:12: error: Memory @0x************ is not pre-allocated. 
+
+---------------------------------------------------------
+2nd: Free memory at the address which is not returned by malloc.
+
+Input:
+17    int * x = (int*) malloc(sizeof(int)*100);
+18    free(x+10);
+
+Expected output:
+    main.c:18: error: Memory @0x****** is not the previously returned address by malloc(). 
+
+---------------------------------------------------------
+3rd: Redundantly free the memory at the address the second time
+Input:
+23    int *y = (int*) malloc(100);
+24    free(y);
+25    free(y);
+
+Expected output:
+    main.c:25: error: Memory @0x****** is already free-d.
+        Did you free it at line 24 in main.c ? 
+
+-----------------------------------------------------------
+4th: Perfectly valid test
+Input:
+    int *z = (int*) malloc(200);
+    free(z);
+    z = (int*) malloc(200);
+    free(z);
+
+Output:
+    Perfectly Valid Free()
+
+---------------------------------------------------------
+5th: Out of memory
+
+Input:
+43    int *t = (int*) malloc(5000);
+
+Output:
+    main.c:43: error: Memory is insufficient to malloc().
+
+

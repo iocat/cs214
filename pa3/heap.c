@@ -57,7 +57,7 @@ void errorReport( char* file, int caller_line, HeapError error, void* address){
         fprintf(stderr,"Memory @%p is not pre-allocated.",address);
         break;
     case HEAP_FREE_MIDDLE:
-        fprintf(stderr,"Memory @%p is not the allocated one.",address);
+        fprintf(stderr,"Memory @%p is not the previously returned address by malloc().",address);
         break;
     }
     printf("\n");
