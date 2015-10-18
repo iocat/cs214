@@ -1,10 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include "heap.h" 
-
-#define malloc(x) customMalloc(x,__FILE__,__LINE__);
-#define free(x) customFree(x,__FILE__,__LINE__);
-
 
 // Free the memory that is not malloc()
 void not_malloced_free(){

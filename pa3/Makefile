@@ -1,15 +1,17 @@
+TARGET = main
 CFLAGS = -Wall -g
 CC = gcc
+OBJECTS = $(patsubst %.c, %.o, $(wildcard *.c))
+HEADERS = $(wildcard *.h)
 
-all: libheap.a main.c
-	$(CC) $(CFLAGS) main.c -L. -lheap -o test
+all: $(TARGET)
+	
 
-libheap.a: heap.o
-	$(AR) crs $@ $< 
+$(TARGET): $(OBJECTS)
+	$(CC) $(CFLAGS) $(OBJECTS) -o $@
 
-heap.o: heap.c heap.h
-	$(CC) $(CFLAGS) -c $<
+%.o: %.c $(HEADERS)
+	$(CC) $(CFLAGS) $< -c 
  
 clean:
-	rm *.a
 	rm *.o

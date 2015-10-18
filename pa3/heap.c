@@ -36,7 +36,7 @@ struct MemEntry{
     // Available size for or the size of the data
     // When isFree-d, it stores the available size for allocation
     // Otherwise, size is the size of memory allocated
-    int size;
+    unsigned size;
 };
 
 // initialized shows whether the head is constructed or not
@@ -63,7 +63,7 @@ void errorReport( char* file, int caller_line, HeapError error, void* address){
     printf("\n");
 }   
 
-void* customMalloc(int size, char* file, int caller_line){
+void* customMalloc(unsigned size, char* file, int caller_line){
     if(!initialized){
         // Initialize the head
         head = (MemEntryPtr) mem;
