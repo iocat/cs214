@@ -1,0 +1,29 @@
+C Library:
+
+Libraries consist of a set of related functions to perform a common task.
+Eg: the standard C library, libc.a is automatically linked into the program by the gcc compiler and found at /usr/lib/libc.a
+
+# 2 types of library:
+    + Shared library: Library that is dynamically linked at runtime.  ( called DLLs in windows )
+    + Static library: Library that will be linked with the user's objects at compilation time.
+
+Library comes in pair with the header file. It's the library user's reponsibility to include the
+the header file in their source code.
+
+# Keep in mind:
+- The compiler's job ends on the last line of each source code file. A header file describes a function for the compiler not the linker.
+- The linker, static/runtime, uses only the function's name to resolve references. Parameters and semantics are invisible to it
+- The programmer directs the choice of which library to link to an executable.
+    A missing function will prevent execution. 
+    A wrong function will promote wrong execution
+=>>>>>>>>>>>>>>    It's like a MATCHING job.  <<<<<<<<<<<<<<<=
+
+# Compile with static libraries using GCC
+
+    gcc -g -Wall -Llink/to/library -lname -o blah
+    The library will then be located at link/to/library/libname.a <- Notice this
+        lib prefix and .a postfix are removed.
+    
+# How to create a library from object files:
+    ar rcs libname.a file1.o file2.o
+     

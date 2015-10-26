@@ -1,0 +1,8 @@
+There are 3 standard streams in C defined in stdio.h
+FILE* stdin
+    The standard input stream
+FILE* stdout
+    The standard output stream
+FILE* stderr
+    The standard error stream
+

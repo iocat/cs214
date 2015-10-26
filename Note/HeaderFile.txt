@@ -1,0 +1,35 @@
+- What is the purpose of the header file?
+    A header file is a file contains the declaration of a  chunk of declarations 
+( macro, function, structs) so that it can be shared between multiple source files.
+
+- What does it mean by including the header file?
+    Fundamentally, I believe it happens 
+      HERE!
+        |
+        V
+    Preprocess -> Compile -> Assemble -> Link
+C/C++ (.c,.cpp,.h)  -->  Preprocessed C/C++    (.i, .ii) 
+    
+    Assembly(addi, subi,j..)    (.s)
+    Object file(..0110..)   (.o,.obj)  
+    One executatble file  
+    
+    When we include a header file inside a C source code. 
+    The preprocessor will copy the declarations in the header file and put 
+them into the C source code ( like expand #include directive to a chunk of code).
+Then in the compilation process, the source file after preprocess will be turned into
+assembly code. In the linking process, the function references are resolved by matching function
+'s name in the object's files.
+
+- Watch out:
+    Be careful when writing header file:
+    It's better to add the preprocessor to the header file:
+
+        #ifndef HEADER_FILE_NAME_H
+        #define HEADER_FILE_NAME_H
+
+            /* Header file declarations go here! */
+
+        #endif
+    Why? Because some other source files might include this header file again. We don't wanna
+mess up our life by re-declaring the already-declared.
