@@ -12,3 +12,4 @@ tokenizer: tokenizer.c hashtable.o
 
 clean: 
 	rm *.o
+	rm -f $(EXE)
