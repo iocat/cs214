@@ -9,15 +9,13 @@
 
 
 void usage(){
-    printf("usage: index [indexfile files]");
+    printf("usage: index <indexfile> <files>\n");
 }
 
 int main(int argc , char* argv[]){
+
     if( argc == 1){
         usage();
-        int* x = malloc(100);
-        free(x);
-        free(x);
     }else{
         
     } 
