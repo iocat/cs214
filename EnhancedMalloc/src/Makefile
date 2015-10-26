@@ -3,8 +3,12 @@ CFLAGS = -Wall -g
 CC = gcc
 OBJECTS = $(patsubst %.c, %.o, $(wildcard *.c))
 HEADERS = $(wildcard *.h)
+LIB = libheap.a
 
 all: $(TARGET)
+
+$(LIB): $(subst lib,,$(subst .a,.o,$(LIB)))
+	ar rcs $@ $<
 	
 
 $(TARGET): $(OBJECTS)
@@ -14,4 +18,5 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $< -c 
  
 clean:
-	rm *.o
+	rm -f *.o
+	rm -f *.a
