@@ -2,10 +2,11 @@ CC = gcc
 TARGET = sl
 CFLAGS = -g -Wall
 SLLIB = libsl.a
+SLOBJECT = sorted-list.o
 all: libsl.a main.c
 	$(CC) $(CFLAGS) main.c -L. -lsl -o $(TARGET)
 
-libsl.a: sorted-list.o
+$(SLLIB): $(SLOBJECT)
 	$(AR) rcs $@ $<
 
 sorted-list.o: sorted-list.c sorted-list.h

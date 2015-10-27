@@ -7,22 +7,24 @@ CFLAGS = -g -Wall
 OPTIONS =
 
 # SortedList Library
-SLDIR = ./SortedList/
-SLLIB = libsl.a
-SLDIRFLAG = -L$(SLDIR)
-SLFLAG= -l$(subst lib,,$(subst .a,,$(SLLIB)))
+SLLIB = ./SortedList/libsl.a
 # Enhanced Malloc and Free Library
-MLDIR = ./EnhancedMalloc/
-MLLIB = libheap.a
-MLDIRFLAG = -L$(MLDIR)
-MLFLAG = -l$(subst lib,,$(subst .a,,$(MLLIB)))
+MLLIB = ./EnhancedMalloc/libheap.a
+# Tokenizer Library
+TKLIB = ./Tokenizer/libtk.a
+TKDIR = ./Tokenizer
+
+LIB = $(TKLIB) $(MLLIB) $(SLLIB)
 
 TARGET = index 
 OBJECTS = index.o
 HEADERS = $(wildcard ./**/*.h)
 
-all: $(SLDIR)$(SLLIB) $(MLDIR)$(MLLIB) $(OBJECTS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(SLDIRFLAG) $(SLFLAG) $(MLDIRFLAG) $(MLFLAG)
+all: $(OBJECTS)  $(LIB)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIB) 
+
+$(TKLIB):
+	$(MAKE) -C $(TKDIR)
 
 %.o : %.c $(HEADERS) 
 	$(CC) $(CFLAGS) -c $< $(OPTIONS)
@@ -30,4 +32,4 @@ all: $(SLDIR)$(SLLIB) $(MLDIR)$(MLLIB) $(OBJECTS)
 clean: 
 	rm -f *.o 
 	rm -f $(TARGET)
-
+	$(MAKE) clean -C $(TKDIR)
