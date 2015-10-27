@@ -17,7 +17,7 @@ TKDIR = ./Tokenizer
 LIB = $(TKLIB) $(MLLIB) $(SLLIB)
 
 TARGET = index 
-OBJECTS = index.o
+OBJECTS = index.o dirutil.o
 HEADERS = $(wildcard ./**/*.h)
 
 all: $(OBJECTS)  $(LIB)
