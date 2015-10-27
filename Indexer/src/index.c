@@ -4,12 +4,20 @@
 #ifdef MALLOC
     #include "EnhancedMalloc/heap.h"
 #endif
+struct Index {
+    char* token;
+    SortedListPtr records;
+} ;
+
+struct Record {
+    char* file;
+    int count;
+};
 
 void usage();
 void next();
 
 int main(int argc , char* argv[]){
-    printf("%s",bf);
     if( argc == 1){
         usage();
     }else{
