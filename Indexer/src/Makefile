@@ -3,7 +3,8 @@ CFLAGS = -g -Wall
 
 # User decide whether to use enhanced malloc or not
 # OPTIONS Could be 
-# -MALLOC: to allow using enhanced malloc library
+# -DMALLOC: to allow using enhanced malloc library
+# -DDEBUG: to allow debug mode
 OPTIONS =
 
 # SortedList Library
