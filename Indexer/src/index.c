@@ -81,27 +81,31 @@ char* fix_dir_path(char* dir_path){
     }
     return new_dir_path;
 }
-void index_file(char* offset_path,char* file_path,SortedListPtr indexes ){
+void index_file(char* offset_path,char* file_path,SortedListPtr indeces ){
     // Create a file buffer from the file path
     char* file_buffer = regular_file_to_string(file_path);
-   //First make a dictionary of lowercase-token:count for this file
-    
+    //First make a dictionary of lowercase-token:count for this file
+    //printf("%s\n",file_buffer); 
     //Secondly, for each token create a new record : "file: count" and push them to 
     //the corresponding token's index
-    
+
     free (file_buffer);
 }
 
+void write_to_file(char* file_path, SortedListPtr indeces){
+    
+}
 void traverse_dir(char* dir_path, SortedListPtr indeces){
     static bool initialized = false;
     static char* offset_path;
     if(initialized == false){
         offset_path = dir_path;
         initialized = true;
+        #ifdef DEBUG
+        printf("The offset path is :%s\n",offset_path);
+        printf("Inspect dir: %s\n",offset_path);
+        #endif
     }
-    #ifdef DEBUG
-    printf("Go to dir: %s\n",dir_path);
-    #endif
     DIR* dir_stream = opendir(dir_path);
     struct dirent* dir_ent = readdir(dir_stream);
     char* new_path;
@@ -115,37 +119,39 @@ void traverse_dir(char* dir_path, SortedListPtr indeces){
             strcpy(new_path,dir_path);
             strcat(new_path,dir_ent->d_name);
             /* Check the current entry  */
-            if(is_dir(new_path)){
+            if(dir_ent->d_type==DT_DIR){
                 char* fixed_path = fix_dir_path(new_path);   
+                free(new_path);
                 traverse_dir(fixed_path,indeces); 
                 #ifdef DEBUG  
-                printf("%s\n",fixed_path);
+                printf("Go to dir:%s\n",fixed_path);
                 #endif
                 free(fixed_path);
-            }else if(is_regular_file(new_path)){
-                //index_file(offset_path,new_path,indeces);   
+            }else if(dir_ent->d_type==DT_REG){
                 #ifdef DEBUG
                 printf("%s\n",new_path);
                 #endif
+                index_file(offset_path,new_path,indeces);   
+                free(new_path);
             }
-            free(new_path);
         }
         // Go to the next entry
         dir_ent = readdir(dir_stream);
     }
+    closedir(dir_stream);
 }
 
-void check_indexer_file(char* index_file){
+void check_inverted_index_file(char* inverted_index_file){
     /* Check index file to store the inverted indeces */
-    if(exists(index_file)){
-        if(is_dir(index_file)){
-            terminate("The given inverted-index file existed as a dir\n"); 
+    if(exists(inverted_index_file)){
+        if(is_dir(inverted_index_file)){
+            terminate("The given inverted-index file already exists as a directory."); 
         }else{
             char c;
-            printf("%s already existed. Do you wanna overwrite it? [Y|n]\n",index_file);
+            printf("%s already existed. Do you wanna overwrite it? [Y|n]\n",inverted_index_file);
             scanf("%c",&c);
             if (c != 'Y' || c!='y' || c == 'N' || c == 'n'){
-                exit( EXIT_FAILURE);
+                exit( EXIT_SUCCESS);
             }
         }
     }
@@ -163,10 +169,10 @@ enum I_Type check_file_path(char* file_path){
             /* The given path is a directory */
             return I_DIR;
         }else{
-            terminate("Invalid file/directory to be indexed\n");  
+            terminate("Invalid file/directory to be indexed.");  
         }
     }else{
-        terminate("File does not exist to be indexed");
+        terminate("File/Directory to be indexed does not exist.");
     }
     return -1;
 }
@@ -177,21 +183,26 @@ int main(int argc , char* argv[]){
     }else if(argc ==2 ){
         terminate("Missing file operand.");
     }else{
-        SortedListPtr indeces = SLCreate(compare_index, destruct_index);
-        char* index_file = argv[1];
-        char* file_path = argv[2];
-        char* fixed_dir_path ;
-        enum I_Type file_type;
 
-        check_indexer_file(index_file);
-        file_type= check_file_path(file_path);  
+        SortedListPtr indeces = SLCreate(compare_index, destruct_index);
+        char* inverted_index_file = argv[1];
+        char* file_path = argv[2];
+        enum I_Type file_type;
+        
+        /* Check the pre-conditions */
+        check_inverted_index_file(inverted_index_file);
+        file_type = check_file_path(file_path);  
+        /* Handle given file/dir */
         if(file_type == I_FILE){
-                    
+             index_file(NULL,file_path,indeces);    
         }else if(file_type == I_DIR){
-            fixed_dir_path = fix_dir_path(file_path);
+            char* fixed_dir_path = fix_dir_path(file_path);
             traverse_dir(fixed_dir_path, indeces);
             free(fixed_dir_path);
         } 
+        /* Write to file */
+        write_to_file(inverted_index_file,indeces);
+        /* Destroy the List */
         SLDestroy(indeces); 
     }
     return EXIT_SUCCESS;

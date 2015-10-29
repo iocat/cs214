@@ -1,5 +1,6 @@
 #ifndef SORTED_LIST_H
 #define SORTED_LIST_H
+#include <stdlib.h>
 
 //======Prototypes for User-Defined Functions==========
 /*
