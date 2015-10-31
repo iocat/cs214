@@ -7,36 +7,18 @@ CFLAGS = -g -Wall
 # -DDEBUG: to allow debug mode
 OPTIONS =
 
-# SortedList Library
-SLDIR = ./SortedList/
-SLLIB = libsl.a
-# Enhanced Malloc and Free Library
-MLLIB = libheap.a
-MLDIR = ./EnhancedMalloc/
-# Tokenizer Library
-TKLIB =  libtk.a
-TKDIR = ./Tokenizer/
-
-LIB = $(TKDIR)$(TKLIB) $(MLDIR)$(MLLIB) $(SLDIR)$(SLLIB)
-
 TARGET = index 
-OBJECTS = index.o dirutil.o
+OBJECTS = index.o dirutil.o hashmap.o sorted-list.o tokenizer.o
 HEADERS = $(wildcard ./**/*.h)
 
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS) $(LIB)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIB) 
+debug: 
+	$(MAKE) clean
+	$(MAKE) OPTIONS=-DDEBUG
 
-$(SLDIR)$(SLLIB):
-	$(MAKE) -C $(SLDIR) $(SLLIB)
-
-$(MLDIR)$(MLLIB):
-	$(MAKE) -C $(MLDIR) $(MLLIB)
-
-$(TKDIR)$(TKLIB):
-	$(MAKE) -C $(TKDIR) $(TKLIB)
-
+$(TARGET): $(OBJECTS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) 
 
 %.o : %.c $(HEADERS) 
 	$(CC) $(CFLAGS) -c $< $(OPTIONS)
@@ -44,6 +26,3 @@ $(TKDIR)$(TKLIB):
 clean: 
 	rm -f *.o 
 	rm -f $(TARGET)
-	$(MAKE) clean -C $(TKDIR)
-	$(MAKE) clean -C $(MLDIR)
-	$(MAKE) clean -C $(SLDIR)

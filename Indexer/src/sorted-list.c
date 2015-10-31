@@ -202,7 +202,8 @@ SortedListIteratorPtr SLCreateIterator(SortedListPtr list){
         // Point the current pointer to the first item of the list
         sli->current = list->first;
         // Increase the number of pointer points to it
-        list->first->ptrCount++;
+        if(list->first!=NULL)
+            list->first->ptrCount++;
         //  copy the destruct function
         sli->destruct = list->destruct;
  

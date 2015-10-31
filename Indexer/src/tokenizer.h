@@ -1,7 +1,15 @@
+#ifndef TOKENIZER_H
+#define TOKENIZER_H
 /*
  * tokenizer.c
  */
+
+// Enum type represents the token type
+typedef enum TokenT_{CTR, OPE, MAL, OCTAL, HEX, DEC, WORD, FLOAT } TokenT;
+
 typedef struct TokenizerT_ TokenizerT;
+
+TokenT TKGetType(TokenizerT* tk);
 /*
  *  TKCreate initializes a TokenizerT object
  */
@@ -23,3 +31,4 @@ void TKDestroy( TokenizerT *);
  *
  */
 char *TKGetNextToken( TokenizerT *);
+#endif
