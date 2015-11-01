@@ -12,7 +12,7 @@ int fd_len(int fd){
 }
 int is_regular_file(const char* const file_path){
     struct stat path_stat;
-    stat(file_path, &path_stat);
+    lstat(file_path, &path_stat);
     return S_ISREG(path_stat.st_mode);
 }
 

@@ -14,7 +14,7 @@
 #define HASH_SIZE 100
 #define PROGRAM_NAME "index"
 void terminate(char* error_mes){
-    fprintf(stderr,"%s: %s;%s\n",PROGRAM_NAME, error_mes,strerror(errno));
+    fprintf(stderr,"%s: %s\n",PROGRAM_NAME, error_mes);
     exit(EXIT_FAILURE);
 }
 typedef struct record_t {
@@ -41,7 +41,17 @@ int compare_record(void* record1, void* record2 ){
     record_t * recordPtr1 = (record_t*) record1;
     record_t * recordPtr2 = (record_t*) record2;
     // Sorted in descending order 
-   return strcmp(recordPtr1->file, recordPtr2->file);
+    int comp;
+    if(recordPtr1->count == recordPtr2->count){
+        comp = strcmp(recordPtr2->file,recordPtr1->file);
+    }else{
+        comp = recordPtr1->count - recordPtr2->count;
+    }
+    if(comp>0 ){
+        return 1;
+    }else if(comp < 0){
+        return -1;
+    }else return 0;
 }
 void destruct_record(void* record){
     free(((record_t*)record)->file);
@@ -72,10 +82,15 @@ index_t* create_index(char* token){
     }
 }
 int compare_index(void* index1, void* index2){
-    index_t * indexPtr1 = (struct index_t*) index1;
-    index_t * indexPtr2 = (struct index_t*) index2;   
+    index_t * indexPtr1 = (index_t*) index1;
+    index_t * indexPtr2 = (index_t*) index2;   
     //Sorted in ascending order-> twist
-    return strcmp(indexPtr2->token, indexPtr1->token);
+    int comp =  strcmp( indexPtr2->token , indexPtr1->token);
+    if(comp >0){
+        return 1;
+    }else if(comp<0){
+        return -1;
+    }else   return 0;
 }
 void destruct_index(void* index){
     index_t* indexPtr = (struct index_t*) index;
@@ -244,7 +259,7 @@ void index_file(char* offset_path,char* file_path,SortedListPtr indeces ){
 
 void write_to_file(char* file_path, SortedListPtr indeces){
     #ifdef DEBUG
-    printf("Write to file %s:\n");
+    printf("Write to file %s:\n",file_path);
     #endif
     printf("{\"list\" : [\n");
     SortedListIteratorPtr index_iter = SLCreateIterator(indeces);
@@ -327,14 +342,14 @@ void check_inverted_index_file(char* inverted_index_file){
             printf("%s already existed. Do you wanna overwrite it? [Y|n]\n",inverted_index_file);
             scanf("%c",&c);
             if (c != 'Y' || c!='y' || c == 'N' || c == 'n'){
-                exit( EXIT_SUCCESS);
+                exit( EXIT_FAILURE);
             }
         }
     }
 
 }
 
-enum I_Type { I_DIR, I_FILE };
+enum I_Type {I_NOT_EXIST=-1, I_DIR, I_FILE };
 enum I_Type check_file_path(char* file_path){
     /* Check the file/dir to be indexed */
     if(exists(file_path)){
@@ -350,7 +365,12 @@ enum I_Type check_file_path(char* file_path){
     }else{
         terminate("File/Directory to be indexed does not exist.");
     }
-    return -1;
+    return I_NOT_EXIST;
+}
+void clean_up_before_exit(int exit_status, void* index_list){
+    if(exit_status == EXIT_FAILURE){
+        SLDestroy((SortedListPtr)index_list);
+    }
 }
 
 int main(int argc , char* argv[]){
@@ -361,6 +381,8 @@ int main(int argc , char* argv[]){
     }else{
 
         SortedListPtr indeces = SLCreate(compare_index, destruct_index);
+        on_exit(clean_up_before_exit,indeces);
+    
         char* inverted_index_file = argv[1];
         char* file_path = argv[2];
         enum I_Type file_type;

@@ -112,7 +112,7 @@ int SLInsert(SortedListPtr list, void* newObj){
         NodePtr previous = NULL;
         NodePtr smallerNode = list->first;
         int comp ;
-        while( (comp = list->compare(smallerNode->data,newObj))==1)  {
+        while( (comp = list->compare(smallerNode->data,newObj))>0 /*==1*/)  {
             if(smallerNode->next == NULL){
                 // Reach the end of the list
                 smallerNode->next = nodeCreate(newObj);
