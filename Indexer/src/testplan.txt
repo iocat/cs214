@@ -1,0 +1,135 @@
+All the testcases are populated by test.sh
+==================================================================
+Test 1: 
+    The inverted index file already exists as a file.
+    
+    $ ./index ./test/exists.txt ./test
+
+Expected output: 
+    $...
+    File already existed. Do you wanna overwrite it? [Y|n] Y
+==================================================================
+Test 2: 
+    The inverted index file already exists as a directory.
+    
+    $ ./index ./test ./test
+
+Expected output:
+    $...
+    index: The given inverted-index file already exists as a directory.
+ 
+==================================================================
+Test 3: 
+    Index the example from the project description
+    
+    $ ./index ./test3.txt ./test/project_example
+    $ cat ./test3.txt
+    $ rm ./test3.txt
+
+Expected output: 
+    $ cat ./test3.txt
+    {"list" : [
+            {"a" : [
+                {"baa" : 1},
+                {"boo" : 1}
+        ]},
+        {"baa" : [
+            {"baa" : 1}
+        ]},
+        {"boo" : [
+            {"boo" : 1}
+        ]},
+        {"cat" : [
+            {"baa" : 1}
+        ]},
+        {"dog" : [
+            {"boo" : 1}
+        ]},
+        {"name" : [
+            {"boo" : 2},
+            {"baa" : 1}
+        ]}
+    ]}
+    $ ...
+==================================================================
+Test 4: The file to be indexed is not a valid file. Ex: symbolic link
+    
+    $ ./index ./test4.txt ./test/link
+
+Expected output:
+    $...
+    index: Invalid file/directory to be indexed.
+    $
+==================================================================
+Test 5: A larger test case: test/extra
+    
+    $ ./index ./test5.txt ./test/extra
+    $ cat ./test5.txt
+    $ rm ./test5.txt
+Expected output:
+    $...
+    {"list" : [
+        {"a" : [
+            {"a" : 5},
+            {"sub0/b" : 1}
+        ]},
+        {"again" : [
+            {"c" : 1}
+        ]},
+        {"b" : [
+            {"a" : 1},
+            {"sub0/b" : 1}
+        ]},
+        {"b00bs" : [
+            {"b" : 1}
+        ]},
+        {"beasts" : [
+            {"b" : 1}
+        ]},
+        {"blah" : [
+            {"sub0/a" : 3}
+        ]},
+        {"dooh" : [
+            {"sub0/a" : 3}
+        ]},
+        {"dragon" : [
+            {"sub0/b" : 1}
+        ]},
+        {"great" : [
+            {"c" : 2}
+        ]},
+        {"junk" : [
+            {"sub0/a" : 2}
+        ]},
+        {"november" : [
+            {"b" : 1}
+        ]},
+        {"python" : [
+            {"sub0/a" : 3},
+            {"a" : 1},
+            {"b" : 1},
+            {"sub0/b" : 1}
+        ]},
+        {"rutgers" : [
+            {"b" : 1},
+            {"c" : 1}
+        ]},
+        {"spam" : [
+            {"sub0/a" : 5},
+            {"sub0/b" : 4},
+            {"a" : 1},
+            {"b" : 1}
+        ]},
+        {"super" : [
+            {"sub0/a" : 2},
+            {"b" : 1},
+            {"sub0/b" : 1}
+        ]},
+        {"sups" : [
+            {"sub0/a" : 1}
+        ]},
+        {"yup" : [
+            {"sub0/a" : 2}
+        ]}
+    ]}
+==================================================================
