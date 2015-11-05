@@ -261,32 +261,37 @@ void write_to_file(char* file_path, SortedListPtr indeces){
     #ifdef DEBUG
     printf("Write to file %s:\n",file_path);
     #endif
-    printf("{\"list\" : [\n");
+    FILE* file = fopen(file_path, "w+");
+    if(file==NULL){
+        terminate("Cannot open file");
+    }
+    fprintf(file,"{\"list\" : [\n");
     SortedListIteratorPtr index_iter = SLCreateIterator(indeces);
     index_t* index_temp = (index_t*) SLGetItem(index_iter);
     while(index_temp!=NULL){
         SortedListIteratorPtr record_iter = SLCreateIterator(index_temp->records);
         record_t* record_temp = (record_t*) SLGetItem(record_iter);
-        printf("\t{\"%s\" : [\n",index_temp->token);
+        fprintf(file,"\t{\"%s\" : [\n",index_temp->token);
         while(record_temp!=NULL){
-            printf("\t\t{\"%s\" : %d}",record_temp->file,record_temp->count);
+            fprintf(file,"\t\t{\"%s\" : %d}",record_temp->file,record_temp->count);
             record_temp =(record_t*) SLNextItem(record_iter);
             if(record_temp== NULL){
-                printf("\n");
+                fprintf(file,"\n");
             }else{
-                printf(",\n");
+                fprintf(file,",\n");
             }
         }
-        printf("\t]}");
+        fprintf(file,"\t]}");
         SLDestroyIterator(record_iter);
         index_temp = (index_t*) SLNextItem(index_iter);
         if(index_temp == NULL){
-            printf("\n");
+            fprintf(file,"\n");
         }else{
-            printf(",\n");
+            fprintf(file,",\n");
         }
     }
-    printf("]}\n");
+    fprintf(file,"]}\n");
+    fclose(file);
     SLDestroyIterator(index_iter);
 }
 void traverse_dir(char* dir_path, SortedListPtr indeces){
@@ -341,7 +346,8 @@ void check_inverted_index_file(char* inverted_index_file){
             char c;
             printf("%s already existed. Do you wanna overwrite it? [Y|n]\n",inverted_index_file);
             scanf("%c",&c);
-            if (c != 'Y' || c!='y' || c == 'N' || c == 'n'){
+            if ( c != 'Y' && c != 'y'){
+                printf("Abort\n");
                 exit( EXIT_FAILURE);
             }
         }
