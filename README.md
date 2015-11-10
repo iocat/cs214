@@ -8,6 +8,7 @@ Rutgers CS 214: Systems Programming Projects
     PA3: Enhanced Malloc and Free
     PA4: The Indexer
     PA5: Multithread Bank System
+
 ## Structure
 Each project is structured as:
 
