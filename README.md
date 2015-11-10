@@ -6,7 +6,7 @@ Rutgers CS 214: Systems Programming Projects
     PA1: The Real Tokenizer
     PA2: The Sorted List Library
     PA3: Enhanced Malloc and Free
-
+    PA4: The Indexer
 ## Structure
 Each project is structured as:
 
