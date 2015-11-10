@@ -1,6 +1,5 @@
 /*
- * A hashmable uses seperate chaining technique to solve collisions. Implemented using the 
- * SortedList
+ * A hashmable uses seperate chaining technique to solve collisions.
  *
  */
 typedef struct hashmap_t hashmap_t;
