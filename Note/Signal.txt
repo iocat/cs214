@@ -13,3 +13,6 @@ C Code causes signal<---------------- go back and try again
 ---------------------> run signal handler.
 
 sigpromask - examine and change blocked signals.
+
+when we use kill, kill sends a signal to a process signifying it to terminate.
+
