@@ -1,0 +1,17 @@
+Mutex:
+
+Can only unlocked by thread which locked it
+Has 2 states
+can only have one owner
+
+Semaphore 
+any thread can post 
+semaphore counter takes any non-negative value
+multiple threads can access semaphore concurrently.
+
+
+4 conditions fo deadlock:
+- mutual exclusion
+- circular wait
+- no pre-emption
+- hold and wait

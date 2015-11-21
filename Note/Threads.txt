@@ -1,0 +1,29 @@
+A thread is pretty much like a process 
+
+Threads "run concurrently" 
+if on multi-processor: it could run simultaneously.
+but on single processor computer : it's just like an illusion ( The same with process )
+
+Threads occupy the same address space - the address space of the creating process
+processes occupy different address spaces
+
+- On thread create: new thread of execution in same address space
+- On fork: copy of existing process in new address space
+
+2 kinds of thread model:
+
+User thread: let the program handle the threads, the kernel have no idea what the program do
+undercover.
+
+Kernel thread: let the kernel handle the threads with thread table
+
+pthread in C is a multithreading library ( short for posix thread ) that is an interface that meets
+POSIX standard.
+
+int pthread_create( thread_handle, thread_options/behaviour, subroutine, subroutine_arg);
+pthread_join(,...) is like wait of process.
+
+Converstation between thread and process
+Thread:
+Process: pipe.
+

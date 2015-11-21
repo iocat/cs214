@@ -1,0 +1,23 @@
+Socket:
+Allows you to communicate with processes on other machines'
+... OS abstraction for network communication
+
+Client:
+
+
+.. socket (create)
+.. connect
+.. read, write
+
+server (BEING connected to ) 
+    socket(create) create a socket
+    bind(tie this socket to a specific local port) connect the socket to a port
+    listen 
+    accept(BLOCKING CALL!) `
+
+basic C prototype for complex stuff
+    makething(handleToThing,structOfAttributes...(other stuff if neccessary))
+
+
+
+Threads

@@ -1,0 +1,15 @@
+signal.h library contains the signal handling library. This library is like the idea behind java
+try/catch block.
+
+Example :
+Java
+try{
+    // do something
+} catch (Exception e){
+    // handle somekind of exception
+}
+
+C Code causes signal<---------------- go back and try again
+---------------------> run signal handler.
+
+sigpromask - examine and change blocked signals.

@@ -1,0 +1,9 @@
+
+atexit(functionpointer)
+    Register a function pointer to be called/executed before the code returns, but after it is done executing
+
+exit(status)
+    Tell code to stop running and terminate normally. now - do not return
+
+_exit(optionalStatus)
+    tell the code to stop running, 

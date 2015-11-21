@@ -1,0 +1,68 @@
+fork()
+    - generate a duplicate of current process
+        - only differences:
+            0: address space
+            1: pid
+            2: ppid
+        - significant similarities (immediately after fork)
+            0: exact same code
+            1: same variables/data
+            2: file descriptor/file handles
+            3: signal disposition
+
+
+file descriptor vs file handle?
+    fd : data structure used to access a file
+    fh : indicates a position to reference within the file
+
+pid 0: scheduler
+pid 1: init
+
+return values from fork are different
+    child: 0
+    parent: child's pid
+
+This implies : The child cannot create a new process as it's child!
+
+If you are the child process (pid = 0 )
+    exec load a file and execute it in this process
+    on exec call all vestiges of parent are dumped.
+
+now 
+fork: called once, returns twice (return the parent and child)
+exec: called onece, normally does not return( replace the call to exec in the child with new code)
+signal handler: is not called but return ( because it is invoked by the OS on your behalf)
+    SIGNAL: 
+        halt execution
+        indicates a special event that the OS needs to address
+       For example: kill is a signal.
+
+    SIGNAL HANDLER: 
+        code you write to be run in the event of some particular signal, of group of signals.
+        
+
+Exeception model:
+    try{
+        random code
+    }catch (BOOM!){
+        run this code
+    }   
+        ..continue here.(after catch)
+
+Signal mode:
+    instruction 0
+    instruction 1
+    instruction 2
+    instru..
+        SIGNAL!!... call signal handler ... run signal handler to completion .. return to 
+this exact location
+    return
+    ..ction 3
+    instruction 4
+
+Zombie Process:
+    Child process that is done computing but the parent process never called wait() on it.
+
+Who is the system wide foster parent?
+    if the parent process is killed, who takes over parent's duties for the child process?
+    init takes over
