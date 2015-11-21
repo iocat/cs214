@@ -2,3 +2,5 @@ pa3/test
 pa1/tokenizer
 *.a
 *.o
+MultithreadedBanking/sercliex/client
+MultithreadedBanking/sercliex/server

@@ -9,15 +9,9 @@
 #define IP_ADDRESS "172.31.243.26"
 #define LOCAL_HOST "127.0.0.1"
 #define BUFFER_SIZE 1000
-
-
 struct timeval tv ;
 
-
 int main(){
- 
-
-
     struct sockaddr_in server_address;
     int result;
     int server_address_length;
