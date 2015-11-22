@@ -4,3 +4,5 @@ pa1/tokenizer
 *.o
 MultithreadedBanking/sercliex/client
 MultithreadedBanking/sercliex/server
+MultithreadedBanking/src/server
+MultithreadedBanking/src/client
