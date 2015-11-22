@@ -13,10 +13,12 @@
 #define MAX_ACCOUNT 20
 #define SERVER_IP_ADDRESS "172.31.243.26"
 #define SERVER_PORT 9734
-#define WAIT_TIME 20 // seconds
-int main(int argc, char*argv[]){
+#define WAIT_TIME 4 // seconds
+
+int main(int argc, char* argv[]){
+    fprintf(stdout,"REACH");
     /* An array of mutex-protected accounts */
-    account_t accounts[MAX_ACCOUNT] = {0};
+    account_t accounts[MAX_ACCOUNT];
     pthread_mutex_t new_account_lock_mutex;
     /* A session acceptor thread
      * This thread accepts multiple connection from new client
@@ -26,9 +28,9 @@ int main(int argc, char*argv[]){
     void* session_signal = 0;
 
     /* SERVER SET UP */
-    struct sockaddr_in server_address = {0};
-    socklen_t server_address_len =0;
-    int server_socket_fd = 0;
+    struct sockaddr_in server_address;
+    socklen_t server_address_len=0;
+    int server_socket_fd ;
 
     server_socket_fd = socket( AF_INET, SOCK_STREAM, 0);
     // Handle error creating a socket
@@ -63,17 +65,36 @@ int main(int argc, char*argv[]){
     session_thread_info.server_socket_fd = server_socket_fd;
     // Init the mutex
     pthread_mutex_init(&new_account_lock_mutex,NULL);
+    // Run Session thread
     if(pthread_create(&session_thread, NULL, session_subroutine,(void*) 
            &session_thread_info)!=0){
         perror("Cannot create a session thread.");
         exit(EXIT_FAILURE);      
     }
-
+    /* PRINT BANK ACCOUNT EVERY WAIT_TIME seconds  */
     while(1){
         sleep(WAIT_TIME);   
         pthread_mutex_lock(&new_account_lock_mutex); 
-        // print all bank account here.
-                     
+        int temp = 0 ;
+        // print all bank account here
+        if(session_thread_info.accounts_no == 0){
+            printf("Print account: There is no account.");
+        }else{
+            for(temp = 0; temp <session_thread_info.accounts_no; temp++){
+                // Lock the account for reading
+                account_t* account = &accounts[temp];
+                pthread_mutex_lock(account->account_mutex_ptr);
+                printf("Account %d:\n",temp+1);
+                printf("Name:\t%s\n",account->name);
+                printf("Balance:\t%0.2f\n\n",account->balance);
+                if(account->in_session == IN_SESSION){
+                    printf("In Session: YES");
+                }else if(account->in_session == NOT_IN_SESSION){
+                    printf("In Session: NO");
+                }
+                pthread_mutex_unlock(account->account_mutex_ptr);
+            }
+        }
         pthread_mutex_unlock(&new_account_lock_mutex);
     }
     /* Main program waits for the session signal to end. */

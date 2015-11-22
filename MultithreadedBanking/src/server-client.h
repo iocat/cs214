@@ -8,7 +8,7 @@
 typedef struct client_thread_info_t{
     account_t* client_account;
     pthread_mutex_t* new_account_lock_mutex_ptr;
-}client_thread_info_t;
+} client_thread_info_t;
 void* client_subroutine(void*);
 
 #endif
