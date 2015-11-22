@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 
+#include <pthread.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,7 +17,6 @@
 #define WAIT_TIME 4 // seconds
 
 int main(int argc, char* argv[]){
-    fprintf(stdout,"REACH");
     /* An array of mutex-protected accounts */
     account_t accounts[MAX_ACCOUNT];
     pthread_mutex_t new_account_lock_mutex;
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]){
     // Bind the socket to the given address
     if(bind(server_socket_fd,(struct sockaddr*) &server_address,
                 server_address_len) !=0){
-        perror("Cannot bind the socket to the given address");
+        perror("Cannot bind the socket to the given address.");
         exit(EXIT_FAILURE);
     }
     // Allow the socket to listen to the clients

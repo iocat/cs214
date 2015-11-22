@@ -14,10 +14,10 @@ client: $(CLIENT)
 	
 
 $(SERVER): $(subst .c,.o,$(SERVER_SOURCES))
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ -lpthread
 
 $(CLIENT): $(subst .c,.o,$(CLIENT_SOURCES))
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ -lpthread
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
