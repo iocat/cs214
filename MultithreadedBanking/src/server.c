@@ -10,15 +10,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <string.h>
 
 #define MAX_ACCOUNT 20
 #define SERVER_IP_ADDRESS "172.31.243.26"
 #define SERVER_PORT 9734
-#define WAIT_TIME 4 // seconds
-
+// seconds
+#define WAIT_TIME 3
 int main(int argc, char* argv[]){
     /* An array of mutex-protected accounts */
     account_t accounts[MAX_ACCOUNT];
+    int accounts_no = 0;
     pthread_mutex_t new_account_lock_mutex;
     /* A session acceptor thread
      * This thread accepts multiple connection from new client
@@ -31,13 +33,14 @@ int main(int argc, char* argv[]){
     struct sockaddr_in server_address;
     socklen_t server_address_len=0;
     int server_socket_fd ;
-
+  
     server_socket_fd = socket( AF_INET, SOCK_STREAM, 0);
     // Handle error creating a socket
     if( server_socket_fd < 0){
         perror("Cannot initialize the socket for connection.");
         exit( EXIT_FAILURE);
     }
+    struct hostent *he_ptr;
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr= inet_addr(SERVER_IP_ADDRESS);
     server_address.sin_port = htons( SERVER_PORT);
@@ -59,40 +62,47 @@ int main(int argc, char* argv[]){
     
     /* CREATE THE SESSION LISTENING THREAD */
     session_thread_info.accounts_max = MAX_ACCOUNT;
-    session_thread_info.accounts_no = 0;
+    session_thread_info.accounts_no_ptr = &accounts_no;
     session_thread_info.accounts = accounts;
-    session_thread_info.new_account_lock_mutex_ptr = &new_account_lock_mutex;
     session_thread_info.server_socket_fd = server_socket_fd;
     // Init the mutex
-    pthread_mutex_init(&new_account_lock_mutex,NULL);
+    if(pthread_mutex_init(&new_account_lock_mutex,NULL)!=0){
+        perror("Cannot create new mutex");
+        exit(EXIT_FAILURE);   
+    }
+    session_thread_info.new_account_lock_mutex_ptr = &new_account_lock_mutex;
+    session_thread_info.server_socket_fd = server_socket_fd;
+
     // Run Session thread
     if(pthread_create(&session_thread, NULL, session_subroutine,(void*) 
            &session_thread_info)!=0){
         perror("Cannot create a session thread.");
         exit(EXIT_FAILURE);      
     }
-    /* PRINT BANK ACCOUNT EVERY WAIT_TIME seconds  */
+    // PRINT BANK ACCOUNT EVERY WAIT_TIME seconds  
     while(1){
         sleep(WAIT_TIME);   
         pthread_mutex_lock(&new_account_lock_mutex); 
         int temp = 0 ;
         // print all bank account here
-        if(session_thread_info.accounts_no == 0){
-            printf("Print account: There is no account.");
+        if(accounts_no == 0){
+            printf("Print account: There is no account.\n");
         }else{
-            for(temp = 0; temp <session_thread_info.accounts_no; temp++){
+            printf("\n");
+            for(temp = 0; temp <accounts_no; temp++){
                 // Lock the account for reading
                 account_t* account = &accounts[temp];
-                pthread_mutex_lock(account->account_mutex_ptr);
+                pthread_mutex_lock(&(account->account_mutex));
                 printf("Account %d:\n",temp+1);
-                printf("Name:\t%s\n",account->name);
-                printf("Balance:\t%0.2f\n\n",account->balance);
+                printf("Name:\t\t%s\n",account->name);
+                printf("Balance:\t%0.2f\n",account->balance);
                 if(account->in_session == IN_SESSION){
                     printf("In Session: YES");
                 }else if(account->in_session == NOT_IN_SESSION){
                     printf("In Session: NO");
                 }
-                pthread_mutex_unlock(account->account_mutex_ptr);
+                printf("\n");
+                pthread_mutex_unlock(&(account->account_mutex));
             }
         }
         pthread_mutex_unlock(&new_account_lock_mutex);
