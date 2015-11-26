@@ -36,7 +36,9 @@ void* client_subroutine(void* arg){
     FD_ZERO(&read_fd_set); 
     FD_SET(client_socket_fd, &read_fd_set);
     int index =0 ;
-    while(select(client_socket_fd+1,&read_fd_set,NULL,NULL, &timeout)>0){
+    int active_sockets;
+    while((active_sockets = select(client_socket_fd+1,&read_fd_set,NULL,NULL,
+                    &timeout))>0){
         /* Read the request from client */
         read(client_socket_fd, &request, sizeof(request_t));
         // Not in customer session 
@@ -47,10 +49,12 @@ void* client_subroutine(void* arg){
                 index = search_account(accounts,*accounts_no_ptr,
                      request.message.name);
                 if(index <= *accounts_no_ptr - 1){
+                    pthread_mutex_unlock(new_account_lock_mutex_ptr);  
                     response.code = CANNOT_OPEN;
                     sprintf(response.message,"Account's already created");
                     
                 }else{
+                    pthread_mutex_unlock(new_account_lock_mutex_ptr);  
                     //There is no account initially
                     if(index == -1){
                         index = 0;
@@ -60,17 +64,19 @@ void* client_subroutine(void* arg){
                     sprintf(response.message,"Account %s opened.",response.message);
                     (*accounts_no_ptr)++;
                 }           
-                pthread_mutex_unlock(new_account_lock_mutex_ptr);  
                 break;
             case START:
                 pthread_mutex_lock(new_account_lock_mutex_ptr);
                 index = search_account(accounts,*accounts_no_ptr,
                         request.message.name);
                 if(index == -1 || index == *accounts_no_ptr){
+                    pthread_mutex_unlock(new_account_lock_mutex_ptr);
+
                     response.code = CANNOT_START;
                     strcpy(response.message, "There is no account in the \
                             database");
                 }else{
+                    pthread_mutex_unlock(new_account_lock_mutex_ptr);
                     client_account = &accounts[index];
                     account_set_in_session(client_account,IN_SESSION);
 
@@ -78,7 +84,6 @@ void* client_subroutine(void* arg){
                     sprintf(response.message,"Account %s in session.",
                             client_account->name);
                 }
-                pthread_mutex_lock(new_account_lock_mutex_ptr);
                 break;
             default:
                 response.code = CLIENT_NOT_IN_SESSION;
@@ -89,6 +94,7 @@ void* client_subroutine(void* arg){
         // In the customer session
         }else{
             int result = 0;
+            float amount = 0.0;
             switch(request.code){
                 case OPEN:
                     response.code = CANNOT_OPEN;
@@ -101,14 +107,15 @@ void* client_subroutine(void* arg){
                                         brefore using a new bank account.");
                     break;
                 case DEBIT:
-                    account_debit(client_account, request.message.amount);
+                    amount = ntohl(request.message.amount);
+                    account_debit(client_account,amount);
                     response.code = SUCCESS;
                     sprintf(response.message,"Successfully debit $%.2f.",
-                            request.message.amount);
+                            amount);
                     break;
                 case CREDIT:
-                    result = account_credit(client_account,
-                            request.message.amount);
+                    amount = ntohl(request.message.amount);
+                    result = account_credit(client_account,amount);
                     response.code = result;
                     if(response.code == BALANCE_REACH_ZERO){
                         sprintf(response.message,"Balance reached 0. \
@@ -119,7 +126,6 @@ void* client_subroutine(void* arg){
                     }
                     break;
                 case BALANCE:
-                    
                     response.code = SUCCESS;
                     sprintf(response.message,"Your balance is %.2f.",
                             client_account->balance);
@@ -134,18 +140,29 @@ void* client_subroutine(void* arg){
                     response.code = SUCCESS;
                     strcpy(response.message,"Not a valid request.");
                     break;
-            }
-            
+            }    
         }
         while(write(client_socket_fd, &response, sizeof(response_t))<0){
             printf("Error writting to the client socket %d\n",client_socket_fd);
             continue;
         }
-    }   
-    if(client_account != NULL){
-        client_account->in_session = NOT_IN_SESSION;
-        response.code = CONNECTION_TIME_OUT;
-        strcpy(response.message, "Connection time out.");
+        /* If the user finishes his session, stop receiving message */
+        if(request.code == FINISH){
+            break;
+        }
+    }  
+    // If time_out appears to happen
+    if(active_sockets == 0){ 
+        if(client_account != NULL){
+            account_set_in_session(client_account, NOT_IN_SESSION);
+            client_account = NULL;
+            response.code = CONNECTION_TIME_OUT;
+            strcpy(response.message, "Connection time out.");
+            while(write(client_socket_fd, &response, sizeof(response_t))<0){
+                printf("Error writting to the client socket %d\n",client_socket_fd);
+                continue;
+            }    
+        }
     }
 
     close(client_socket_fd);

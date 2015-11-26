@@ -11,9 +11,8 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <string.h>
-
+#include <ifaddrs.h>
 #define MAX_ACCOUNT 20
-#define SERVER_IP_ADDRESS "172.31.243.26"
 #define SERVER_PORT 9734
 // seconds
 #define WAIT_TIME 3
@@ -40,9 +39,9 @@ int main(int argc, char* argv[]){
         perror("Cannot initialize the socket for connection.");
         exit( EXIT_FAILURE);
     }
-    struct hostent *he_ptr;
+
     server_address.sin_family = AF_INET;
-    server_address.sin_addr.s_addr= inet_addr(SERVER_IP_ADDRESS);
+    server_address.sin_addr.s_addr= htonl(INADDR_ANY);
     server_address.sin_port = htons( SERVER_PORT);
     server_address_len = sizeof( server_address);
     // Bind the socket to the given address

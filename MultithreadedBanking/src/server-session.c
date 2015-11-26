@@ -31,16 +31,19 @@ void * session_subroutine(void* arg){
                 pthread_mutex_unlock(&thread_check_mutex);
                 break;
             }
+            pthread_mutex_unlock(&thread_check_mutex);
         }
         if(i == MAX_CLIENT){
             pthread_mutex_unlock(&thread_check_mutex);
             client_socket_fd = accept(socket_fd, NULL,NULL);
+            
             //Tell client to reconnect later
         }else if(( client_socket_fd = accept(socket_fd,
                             (struct sockaddr*) &client_addresses[i],
                             &client_address_len)) < 0){
-                perror("Error on accepting client.");
+             perror("Error on accepting client.");
         }else{
+            printf("Client is connected with socket id %d\n",client_socket_fd);
             client_thread_args[i].client_socket_fd = client_socket_fd;
             client_thread_args[i].client_addr_ptr = &client_addresses[i];
             client_thread_args[i].client_addr_len = client_address_len;
