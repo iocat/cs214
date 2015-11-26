@@ -54,7 +54,7 @@ void* client_subroutine(void* arg){
         }
         // Not in customer session 
         if(client_account == NULL || !account_is_in_session(client_account)){
-            switch (request.code){
+            switch (ntohl(request.code)){
             case OPEN:
                 pthread_mutex_lock(new_account_lock_mutex_ptr);
                 index = search_account(accounts,*accounts_no_ptr,

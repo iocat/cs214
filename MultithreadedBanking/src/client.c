@@ -5,6 +5,9 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <string.h>
+#include "client-command.h"
+#include "client-response.h"
+#include <pthread.h>
 #define SERVER_PORT "9734"
 
 int main(int argc, char* argv[]){
@@ -14,8 +17,11 @@ int main(int argc, char* argv[]){
     }else{
         int client_socket_fd = 0 ;
         struct addrinfo hints,*results;
-
-
+        pthread_t command_thread;
+        pthread_t response_thread;
+        command_arg_t command_arg;
+        response_arg_t response_arg;
+        int response_join;
         /* Get the address info of the server to be connected */
         memset(&hints,0,sizeof hints);
         hints.ai_family = AF_INET;
@@ -39,11 +45,24 @@ int main(int argc, char* argv[]){
                     results->ai_addrlen) < 0 ){
             perror("Cannot connect to the server. Retrying...");
         }
-        printf("Connected successfully.\n");
-        while(1){
-            sleep(100);
+        printf("Successfully connected to the server.\n");
+        
+        command_arg.client_socket_fd = client_socket_fd;
+        command_arg.client_socket_fd = client_socket_fd;
+        pthread_create(&command_thread,NULL,command_subroutine,
+                (void*) &command_arg);
+        pthread_create(&response_thread,NULL,response_subroutine,
+                (void*) &response_arg);
 
-        } 
+        
+        if(pthread_join(response_thread,(void**)&response_join)!=0){
+            perror("Error stoping the response thread");
+            exit(EXIT_FAILURE);
+        }else{
+            printf("Connection to server stopped.");
+            exit(EXIT_FAILURE);
+        }
+
         freeaddrinfo(results);
         exit(EXIT_SUCCESS);
     }

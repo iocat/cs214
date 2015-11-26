@@ -2,8 +2,8 @@ CC = gcc
 CFLAGS = -g -Wall
 SERVER = start-server
 CLIENT = banking
-SERVER_SOURCES = server.c server-session.c server-client.c account.c tokenizer.c
-CLIENT_SOURCES = client.c account.c
+SERVER_SOURCES = server.c server-session.c server-client.c account.c
+CLIENT_SOURCES = client.c account.c client-command.c client-response.c tokenizer.c
 
 all: $(SERVER) $(CLIENT)
 	

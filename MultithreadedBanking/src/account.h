@@ -2,7 +2,7 @@
 #define ACCOUNT_H
 #include <pthread.h>
 
-#define NAME_MAX_LENGTH 100
+#define NAME_MAX_LENGTH 101
 #define REQUEST_MES_LENGTH 101
 #define RESPONSE_MES_LENGTH 300
 typedef struct response_t{
