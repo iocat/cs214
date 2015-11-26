@@ -1,6 +1,6 @@
 #include "server-session.h"
 #include "server-client.h"
-
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <string.h>
@@ -43,7 +43,7 @@ void * session_subroutine(void* arg){
                             &client_address_len)) < 0){
              perror("Error on accepting client.");
         }else{
-            printf("Client is connected with socket id %d\n",client_socket_fd);
+            printf("New client is connected on socket (id = %d)\n",client_socket_fd);
             client_thread_args[i].client_socket_fd = client_socket_fd;
             client_thread_args[i].client_addr_ptr = &client_addresses[i];
             client_thread_args[i].client_addr_len = client_address_len;

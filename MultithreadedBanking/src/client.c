@@ -3,6 +3,7 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #include <string.h>
 #define SERVER_PORT "9734"
 
@@ -21,7 +22,7 @@ int main(int argc, char* argv[]){
         hints.ai_socktype = SOCK_STREAM;
 
         if( getaddrinfo(argv[1],SERVER_PORT,&hints,&results) !=0){
-            perror("Cannot recognize the given server");
+            printf("Cannot recognize the given server name");
             exit(EXIT_FAILURE);
         }
         /* Create the client socket */
@@ -29,14 +30,20 @@ int main(int argc, char* argv[]){
             perror("Cannot create the client socket.");
             exit(EXIT_FAILURE);
         }
-
+        if(results->ai_addr == NULL){
+            perror("Cannot find the given server name.");
+            exit(EXIT_FAILURE);
+        }
         /* Set up the connection */
         while(connect(client_socket_fd, results->ai_addr, 
                     results->ai_addrlen) < 0 ){
             perror("Cannot connect to the server. Retrying...");
         }
         printf("Connected successfully.\n");
-         
+        while(1){
+            sleep(100);
+
+        } 
         freeaddrinfo(results);
         exit(EXIT_SUCCESS);
     }

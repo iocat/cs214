@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <stdio.h>
+#include <arpa/inet.h>
 #include "server-client.h"
 
 int search_account(account_t* accounts, int account_no, char* name){
@@ -37,10 +38,20 @@ void* client_subroutine(void* arg){
     FD_SET(client_socket_fd, &read_fd_set);
     int index =0 ;
     int active_sockets;
+    int byte_read;
     while((active_sockets = select(client_socket_fd+1,&read_fd_set,NULL,NULL,
                     &timeout))>0){
         /* Read the request from client */
-        read(client_socket_fd, &request, sizeof(request_t));
+        byte_read = read(client_socket_fd, &request, sizeof(request_t));
+        if(byte_read == 0){
+            printf("Connection with client (socket id %d) is closed"\
+                    " unexpectedly.\n",client_socket_fd);
+            if(client_account != NULL){
+                account_set_in_session(client_account, NOT_IN_SESSION);
+                client_account = NULL;
+            }
+            break;
+        }
         // Not in customer session 
         if(client_account == NULL || !account_is_in_session(client_account)){
             switch (request.code){
@@ -73,8 +84,8 @@ void* client_subroutine(void* arg){
                     pthread_mutex_unlock(new_account_lock_mutex_ptr);
 
                     response.code = CANNOT_START;
-                    strcpy(response.message, "There is no account in the \
-                            database");
+                    strcpy(response.message, "There is no account in the "\
+                            "database");
                 }else{
                     pthread_mutex_unlock(new_account_lock_mutex_ptr);
                     client_account = &accounts[index];
@@ -87,8 +98,8 @@ void* client_subroutine(void* arg){
                 break;
             default:
                 response.code = CLIENT_NOT_IN_SESSION;
-                strcpy(response.message, "You must start an account or open an \
-                                    account in order to proceed.");
+                strcpy(response.message, "You must start an account or"\
+                        " open an account in order to proceed.");
                 break;
             }
         // In the customer session
@@ -98,13 +109,13 @@ void* client_subroutine(void* arg){
             switch(request.code){
                 case OPEN:
                     response.code = CANNOT_OPEN;
-                    strcpy(response.message, "Please finish the current session\
-                                       before opening a new account.");
+                    strcpy(response.message, "Please finish the current"\
+                            " session before opening a new account.");
                     break;
                 case START:
                     response.code = CANNOT_START;
-                    strcpy(response.message,"Please finish the current session\
-                                        brefore using a new bank account.");
+                    strcpy(response.message,"Please finish the current"\
+                            " session before using a new bank account.");
                     break;
                 case DEBIT:
                     amount = ntohl(request.message.amount);
@@ -118,8 +129,9 @@ void* client_subroutine(void* arg){
                     result = account_credit(client_account,amount);
                     response.code = result;
                     if(response.code == BALANCE_REACH_ZERO){
-                        sprintf(response.message,"Balance reached 0. \
-                                Your balance is: $%.2f",client_account->balance);
+                        sprintf(response.message,"Balance reached 0. "\
+                                "Your balance is: $%.2f",
+                                client_account->balance);
                     }else if( response.code == SUCCESS){
                         sprintf(response.message,"Successfully credit $%.2f.",
                                 request.message.amount);
