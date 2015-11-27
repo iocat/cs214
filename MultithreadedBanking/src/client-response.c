@@ -10,9 +10,11 @@ void* response_subroutine(void* arg){
     response_arg_t* response_arg = (response_arg_t* ) arg;
     int client_socket_fd = response_arg->client_socket_fd;
     struct timeval timeout = {3000,0};
+
     fd_set read_fd_set;
     FD_ZERO(&read_fd_set);
-    FD_SET(client_socket_fd,&read_fd_set);
+    FD_SET( client_socket_fd ,&read_fd_set);
+
     int active_sockets;
     int byte_read;
     response_t response;
@@ -27,7 +29,7 @@ void* response_subroutine(void* arg){
         }
         if(response.code !=SUCCESS)
             printf("Error: ");
-        printf("Bank: %s\n",response.message);
+        printf("%s\n",response.message);
     }
     // Timeout stop listening to the server. 
     // The account is no longer in session

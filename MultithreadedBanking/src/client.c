@@ -48,9 +48,9 @@ int main(int argc, char* argv[]){
         printf("Successfully connected to the server.\n");
         
         command_arg.client_socket_fd = client_socket_fd;
-        command_arg.client_socket_fd = client_socket_fd;
         pthread_create(&command_thread,NULL,command_subroutine,
                 (void*) &command_arg);
+        response_arg.client_socket_fd = client_socket_fd;
         pthread_create(&response_thread,NULL,response_subroutine,
                 (void*) &response_arg);
 
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]){
             perror("Error stoping the response thread");
             exit(EXIT_FAILURE);
         }else{
-            printf("Connection to server stopped.");
+            printf("Connection to server stopped.\n");
             exit(EXIT_FAILURE);
         }
 

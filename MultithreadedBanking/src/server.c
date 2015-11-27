@@ -88,20 +88,21 @@ int main(int argc, char* argv[]){
             printf("Print account: There is no account.\n");
         }else{
             printf("\n");
+            printf("%9s%50s%10s%13s\n","Account","Name","Balance","In Session");
             for(temp = 0; temp <accounts_no; temp++){
                 // Lock the account for reading
                 account_t* account = &accounts[temp];
                 pthread_mutex_lock(&(account->account_mutex));
-                printf("Account %d:\n",temp+1);
-                printf("Name:\t\t%s\n",account->name);
-                printf("Balance:\t%0.2f\n",account->balance);
+                printf("%9d",temp+1);
+                printf("%50s",account->name);
+                printf("%10.2f ",account->balance);
                 if(account->in_session == IN_SESSION){
-                    printf("In Session: YES");
+                    printf("%13s","YES");
                 }else if(account->in_session == NOT_IN_SESSION){
-                    printf("In Session: NO");
+                    printf("%13s","NO");
                 }
-                printf("\n");
                 pthread_mutex_unlock(&(account->account_mutex));
+                printf("\n");
             }
         }
         pthread_mutex_unlock(&new_account_lock_mutex);

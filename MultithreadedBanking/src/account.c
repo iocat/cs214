@@ -13,6 +13,7 @@ int account_credit(account_t* account, float credit_amount){
         pthread_mutex_unlock(&(account->account_mutex));
         return BALANCE_REACH_ZERO;
     }else{
+        account->balance-=credit_amount;
         pthread_mutex_unlock(&(account->account_mutex));
         return SUCCESS;
     }

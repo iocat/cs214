@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <arpa/inet.h>
 #include "server-client.h"
 
@@ -57,56 +58,61 @@ void* client_subroutine(void* arg){
             switch (ntohl(request.code)){
             case OPEN:
                 pthread_mutex_lock(new_account_lock_mutex_ptr);
+                
                 index = search_account(accounts,*accounts_no_ptr,
                      request.message.name);
-                if(index <= *accounts_no_ptr - 1){
-                    pthread_mutex_unlock(new_account_lock_mutex_ptr);  
+                if(index==-1){
+                    account_open(&accounts[0],request.message.name);
+                }else if(index <= *accounts_no_ptr - 1){
                     response.code = CANNOT_OPEN;
                     sprintf(response.message,"Account's already created");
-                    
+                    pthread_mutex_unlock(new_account_lock_mutex_ptr);
+                    break;
                 }else{
-                    pthread_mutex_unlock(new_account_lock_mutex_ptr);  
-                    //There is no account initially
-                    if(index == -1){
-                        index = 0;
-                    }
-                    response.code = SUCCESS;
                     account_open(&(accounts[index]),request.message.name);
-                    sprintf(response.message,"Account %s opened.",response.message);
-                    (*accounts_no_ptr)++;
                 }           
+                response.code = SUCCESS;
+                sprintf(response.message,"Account %s opened.",request.message.name);
+                (*accounts_no_ptr)++;
+
+                pthread_mutex_unlock(new_account_lock_mutex_ptr);  
                 break;
             case START:
                 pthread_mutex_lock(new_account_lock_mutex_ptr);
+                
                 index = search_account(accounts,*accounts_no_ptr,
                         request.message.name);
                 if(index == -1 || index == *accounts_no_ptr){
-                    pthread_mutex_unlock(new_account_lock_mutex_ptr);
-
                     response.code = CANNOT_START;
-                    strcpy(response.message, "There is no account in the "\
-                            "database");
+                    strcpy(response.message, "Account is not found");
                 }else{
-                    pthread_mutex_unlock(new_account_lock_mutex_ptr);
-                    client_account = &accounts[index];
-                    account_set_in_session(client_account,IN_SESSION);
-
-                    response.code = SUCCESS;
-                    sprintf(response.message,"Account %s in session.",
-                            client_account->name);
+                    pthread_mutex_lock(&(accounts[index].account_mutex));
+                    if(accounts[index].in_session == IN_SESSION){
+                        pthread_mutex_unlock(&(accounts[index].account_mutex));
+                        response.code = CANNOT_START;
+                        sprintf(response.message,"Requested account '%s' has been"\
+                         " started on another session.",(accounts[index]).name);
+                    }else{
+                        pthread_mutex_unlock(&(accounts[index].account_mutex));
+                        client_account = &accounts[index];
+                        account_set_in_session(client_account,IN_SESSION);
+                        response.code = SUCCESS;
+                        sprintf(response.message,"Account %s in session.",
+                                client_account->name);
+                    }
                 }
+                pthread_mutex_unlock(new_account_lock_mutex_ptr);
                 break;
             default:
                 response.code = CLIENT_NOT_IN_SESSION;
-                strcpy(response.message, "You must start an account or"\
-                        " open an account in order to proceed.");
+                strcpy(response.message, "You must start an account.");
                 break;
             }
         // In the customer session
         }else{
             int result = 0;
             float amount = 0.0;
-            switch(request.code){
+            switch(ntohl(request.code)){
                 case OPEN:
                     response.code = CANNOT_OPEN;
                     strcpy(response.message, "Please finish the current"\
@@ -118,14 +124,14 @@ void* client_subroutine(void* arg){
                             " session before using a new bank account.");
                     break;
                 case DEBIT:
-                    amount = ntohl(request.message.amount);
+                    amount = atof(request.message.amount);
                     account_debit(client_account,amount);
                     response.code = SUCCESS;
                     sprintf(response.message,"Successfully debit $%.2f.",
                             amount);
                     break;
                 case CREDIT:
-                    amount = ntohl(request.message.amount);
+                    amount =atof(request.message.amount);
                     result = account_credit(client_account,amount);
                     response.code = result;
                     if(response.code == BALANCE_REACH_ZERO){
@@ -134,13 +140,13 @@ void* client_subroutine(void* arg){
                                 client_account->balance);
                     }else if( response.code == SUCCESS){
                         sprintf(response.message,"Successfully credit $%.2f.",
-                                request.message.amount);
+                                amount);
                     }
                     break;
                 case BALANCE:
                     response.code = SUCCESS;
-                    sprintf(response.message,"Your balance is %.2f.",
-                            client_account->balance);
+                    sprintf(response.message,"Account: %s.\nYour balance is %.2f.",
+                            client_account->name,client_account->balance);
                     break;
                 case FINISH:
                     response.code = SUCCESS;

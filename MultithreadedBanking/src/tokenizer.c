@@ -158,7 +158,7 @@ TokenT formWordToken(char** curPos, int* length){
     // Add the first alphabetic character to the token
     addCurCharToToken(curPos,length);
     //Keep adding alphanumeric char
-    while(isalnum(**curPos)){
+    while(isalnum(**curPos) || **curPos == '_'){
         addCurCharToToken(curPos,length);
     }
     return WORD;
