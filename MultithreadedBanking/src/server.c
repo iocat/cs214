@@ -27,7 +27,7 @@ int main(int argc, char* argv[]){
     pthread_t session_thread;
     session_thread_info_t session_thread_info; 
     void* session_signal = 0;
-
+    int enable_reuse_socket = 1;
     /* SERVER SET UP */
     struct sockaddr_in server_address;
     socklen_t server_address_len=0;
@@ -45,6 +45,10 @@ int main(int argc, char* argv[]){
     server_address.sin_port = htons( SERVER_PORT);
     server_address_len = sizeof( server_address);
     // Bind the socket to the given address
+    if(setsockopt(server_socket_fd,SOL_SOCKET,SO_REUSEADDR,&enable_reuse_socket
+                ,sizeof(int))<0){
+        perror("Fail to reuse socket.");
+    }
     if(bind(server_socket_fd,(struct sockaddr*) &server_address,
                 server_address_len) !=0){
         perror("Cannot bind the socket to the given address.");

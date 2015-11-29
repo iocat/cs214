@@ -59,18 +59,23 @@ void* command_subroutine(void* arg){
         }else if( strcmp(token,"open") == 0 ){
             free(token);
             token = TKGetNextToken(tk);
-            if(strlen(token)<= NAME_MAX_LENGTH-1){
-                request.code = htonl(OPEN);
-                strcpy(request.message.name,token);
-                valid_command = 1;
+            if(token==NULL){
+                printf(INVALID_CMD);
             }else{
-                printf("The name length is invalid.\n");
+                if(strlen(token)<= NAME_MAX_LENGTH-1){
+                    request.code = htonl(OPEN);
+                    strcpy(request.message.name,token);
+                    valid_command = 1;
+                }else{
+                    printf("The name length is invalid.\n");
+                }
+                free(token);
             }
-            free(token);
         }else if(strcmp(token,"start")==0){
             free(token);
             token = TKGetNextToken(tk);
             if(token == NULL){
+                valid_command = 0 ;
                 printf("%s\n",INVALID_CMD);
             }else{
                 if(strlen(token)<=NAME_MAX_LENGTH-1){
@@ -117,10 +122,8 @@ void* command_subroutine(void* arg){
             valid_command=1;
         }else if(strcmp(token,"exit")==0){
             free(token);
-            printf("Exit.\n");
-            close(client_socket_fd);
-            TKDestroy(tk);
-            pthread_exit(NULL);
+            request.code = htonl(EXIT);
+            valid_command = 1;
         }else if(strcmp(token,"help")==0){
             free(token);
             printf("open ACCOUNT_NAME\n"\
@@ -147,8 +150,13 @@ void* command_subroutine(void* arg){
                 resetTermios();
             }
         }
-        printf(PROMPT);
         TKDestroy(tk);
+        if(request.code ==ntohl(EXIT)){
+            printf("Exit.\n");
+            break;
+        }else
+            printf(PROMPT);
+
     } 
     close(client_socket_fd);
     pthread_exit(NULL);

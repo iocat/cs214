@@ -45,8 +45,7 @@ void* client_subroutine(void* arg){
         /* Read the request from client */
         byte_read = read(client_socket_fd, &request, sizeof(request_t));
         if(byte_read == 0){
-            printf("Connection with client (socket id %d) is closed"\
-                    " unexpectedly.\n",client_socket_fd);
+            printf("Connection with client (socket id %d) is closed.\n",client_socket_fd);
             if(client_account != NULL){
                 account_set_in_session(client_account, NOT_IN_SESSION);
                 client_account = NULL;
@@ -58,24 +57,28 @@ void* client_subroutine(void* arg){
             switch (ntohl(request.code)){
             case OPEN:
                 pthread_mutex_lock(new_account_lock_mutex_ptr);
-                
-                index = search_account(accounts,*accounts_no_ptr,
-                     request.message.name);
-                if(index==-1){
-                    account_open(&accounts[0],request.message.name);
-                }else if(index <= *accounts_no_ptr - 1){
+                if(*accounts_no_ptr == accounts_max){
                     response.code = CANNOT_OPEN;
-                    sprintf(response.message,"Account's already created");
-                    pthread_mutex_unlock(new_account_lock_mutex_ptr);
-                    break;
-                }else{
-                    account_open(&(accounts[index]),request.message.name);
-                }           
-                response.code = SUCCESS;
-                sprintf(response.message,"Account %s opened.",request.message.name);
-                (*accounts_no_ptr)++;
-
-                pthread_mutex_unlock(new_account_lock_mutex_ptr);  
+                    strcpy(response.message,"Database is full.");
+                }else{ 
+                    index = search_account(accounts,*accounts_no_ptr,
+                         request.message.name);
+                    if(index==-1){
+                        account_open(&accounts[0],request.message.name);
+                    }else if(index <= *accounts_no_ptr - 1){
+                        response.code = CANNOT_OPEN;
+                        sprintf(response.message,"Account's already created");
+                        pthread_mutex_unlock(new_account_lock_mutex_ptr);
+                        break;
+                    }else{
+                        account_open(&(accounts[index]),request.message.name);
+                    }           
+                    response.code = SUCCESS;
+                    sprintf(response.message,"Account %s opened.",
+                            request.message.name);
+                    (*accounts_no_ptr)++;
+                }
+                pthread_mutex_unlock(new_account_lock_mutex_ptr);
                 break;
             case START:
                 pthread_mutex_lock(new_account_lock_mutex_ptr);
@@ -102,6 +105,10 @@ void* client_subroutine(void* arg){
                     }
                 }
                 pthread_mutex_unlock(new_account_lock_mutex_ptr);
+                break;
+            case EXIT:
+                response.code = SUCCESS;
+                strcpy(response.message,"Exit acknowledged.");
                 break;
             default:
                 response.code = CLIENT_NOT_IN_SESSION;
@@ -148,6 +155,12 @@ void* client_subroutine(void* arg){
                     sprintf(response.message,"Account: %s.\nYour balance is %.2f.",
                             client_account->name,client_account->balance);
                     break;
+                case EXIT:
+                    response.code = SUCCESS;
+                    sprintf(response.message,"Exit acknowledged.\nAccount session closed.");
+                    account_set_in_session(client_account,NOT_IN_SESSION);
+                    client_account = NULL; 
+                    break;
                 case FINISH:
                     response.code = SUCCESS;
                     account_set_in_session(client_account,NOT_IN_SESSION);
@@ -163,10 +176,6 @@ void* client_subroutine(void* arg){
         while(write(client_socket_fd, &response, sizeof(response_t))<0){
             printf("Error writting to the client socket %d\n",client_socket_fd);
             continue;
-        }
-        /* If the user finishes his session, stop receiving message */
-        if(request.code == FINISH){
-            break;
         }
     }  
     // If time_out appears to happen

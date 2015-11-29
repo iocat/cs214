@@ -9,7 +9,7 @@
 #include "client-response.h"
 #include <pthread.h>
 #define SERVER_PORT "9734"
-
+#define WAIT_SERVER_TIME 3
 int main(int argc, char* argv[]){
     if(argc<2){
         printf("usage: %s MACHINE_NAME\n",argv[0]); 
@@ -26,7 +26,6 @@ int main(int argc, char* argv[]){
         memset(&hints,0,sizeof hints);
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
-
         if( getaddrinfo(argv[1],SERVER_PORT,&hints,&results) !=0){
             printf("Cannot recognize the given server name");
             exit(EXIT_FAILURE);
@@ -41,9 +40,18 @@ int main(int argc, char* argv[]){
             exit(EXIT_FAILURE);
         }
         /* Set up the connection */
-        while(connect(client_socket_fd, results->ai_addr, 
+        while(connect(client_socket_fd,results->ai_addr, 
                     results->ai_addrlen) < 0 ){
-            perror("Cannot connect to the server. Retrying...");
+            printf("Cannot connect to the server. Retrying...\n");
+            sleep(WAIT_SERVER_TIME);
+            memset(&hints,0,sizeof hints);
+            hints.ai_family = AF_INET;
+            hints.ai_socktype = SOCK_STREAM;
+            freeaddrinfo(results);
+            if( getaddrinfo(argv[1],SERVER_PORT,&hints,&results) !=0){
+                printf("Cannot recognize the given server name");
+                exit(EXIT_FAILURE);
+            }
         }
         printf("Successfully connected to the server.\n");
         
