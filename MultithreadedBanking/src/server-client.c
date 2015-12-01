@@ -8,6 +8,10 @@
 #include <arpa/inet.h>
 #include "server-client.h"
 
+void set_response(response_t* response ,int code, char* message){
+    response->code = htonl(code);
+    strcpy(response->message, message);
+}
 int search_account(account_t* accounts, int account_no, char* name){
     int index = 0 ; 
     if(account_no == 0){
@@ -58,25 +62,24 @@ void* client_subroutine(void* arg){
             case OPEN:
                 pthread_mutex_lock(new_account_lock_mutex_ptr);
                 if(*accounts_no_ptr == accounts_max){
-                    response.code = CANNOT_OPEN;
-                    strcpy(response.message,"Database is full.");
+                    set_response(&response,CANNOT_OPEN,"Database is full.");
                 }else{ 
                     index = search_account(accounts,*accounts_no_ptr,
                          request.message.name);
                     if(index==-1){
+                        (*accounts_no_ptr)++;
                         account_open(&accounts[0],request.message.name);
                     }else if(index <= *accounts_no_ptr - 1){
-                        response.code = CANNOT_OPEN;
-                        sprintf(response.message,"Account's already created");
+                        set_response(&response,CANNOT_OPEN,"Account's already created.");
                         pthread_mutex_unlock(new_account_lock_mutex_ptr);
                         break;
                     }else{
                         account_open(&(accounts[index]),request.message.name);
+                        (*accounts_no_ptr)++;
                     }           
-                    response.code = SUCCESS;
+                    set_response(&response,SUCCESS,"");
                     sprintf(response.message,"Account %s opened.",
                             request.message.name);
-                    (*accounts_no_ptr)++;
                 }
                 pthread_mutex_unlock(new_account_lock_mutex_ptr);
                 break;
@@ -86,20 +89,19 @@ void* client_subroutine(void* arg){
                 index = search_account(accounts,*accounts_no_ptr,
                         request.message.name);
                 if(index == -1 || index == *accounts_no_ptr){
-                    response.code = CANNOT_START;
-                    strcpy(response.message, "Account is not found");
+                    set_response(&response,CANNOT_START,"Account is not found");
                 }else{
                     pthread_mutex_lock(&(accounts[index].account_mutex));
                     if(accounts[index].in_session == IN_SESSION){
                         pthread_mutex_unlock(&(accounts[index].account_mutex));
-                        response.code = CANNOT_START;
+                        response.code = htonl(CANNOT_START);
                         sprintf(response.message,"Requested account '%s' has been"\
                          " started on another session.",(accounts[index]).name);
                     }else{
                         pthread_mutex_unlock(&(accounts[index].account_mutex));
                         client_account = &accounts[index];
                         account_set_in_session(client_account,IN_SESSION);
-                        response.code = SUCCESS;
+                        response.code = htonl(SUCCESS);
                         sprintf(response.message,"Account %s in session.",
                                 client_account->name);
                     }
@@ -107,12 +109,11 @@ void* client_subroutine(void* arg){
                 pthread_mutex_unlock(new_account_lock_mutex_ptr);
                 break;
             case EXIT:
-                response.code = SUCCESS;
-                strcpy(response.message,"Exit acknowledged.");
+                set_response(&response,SUCCESS,"Exit acknowledged.");
                 break;
             default:
-                response.code = CLIENT_NOT_IN_SESSION;
-                strcpy(response.message, "You must start an account.");
+                set_response(&response,CLIENT_NOT_IN_SESSION,"You must start"\
+                        "an account.");
                 break;
             }
         // In the customer session
@@ -121,19 +122,18 @@ void* client_subroutine(void* arg){
             float amount = 0.0;
             switch(ntohl(request.code)){
                 case OPEN:
-                    response.code = CANNOT_OPEN;
-                    strcpy(response.message, "Please finish the current"\
+                    set_response(&response,CANNOT_OPEN,"Please finish the current"\
                             " session before opening a new account.");
                     break;
                 case START:
-                    response.code = CANNOT_START;
-                    strcpy(response.message,"Please finish the current"\
+                    set_response(&response,CANNOT_START,
+                            "Please finish the current"\
                             " session before using a new bank account.");
                     break;
                 case DEBIT:
                     amount = atof(request.message.amount);
                     account_debit(client_account,amount);
-                    response.code = SUCCESS;
+                    set_response(&response,SUCCESS,"");
                     sprintf(response.message,"Successfully debit $%.2f.",
                             amount);
                     break;
@@ -141,30 +141,31 @@ void* client_subroutine(void* arg){
                     amount =atof(request.message.amount);
                     result = account_credit(client_account,amount);
                     response.code = result;
-                    if(response.code == BALANCE_REACH_ZERO){
+                    set_response(&response,result,"");
+                    if(result == BALANCE_REACH_ZERO){
                         sprintf(response.message,"Balance reached 0. "\
                                 "Your balance is: $%.2f",
                                 client_account->balance);
-                    }else if( response.code == SUCCESS){
+                    }else if( result == SUCCESS){
                         sprintf(response.message,"Successfully credit $%.2f.",
                                 amount);
                     }
                     break;
                 case BALANCE:
-                    response.code = SUCCESS;
+                    set_response(&response,SUCCESS,"");
                     sprintf(response.message,"Account: %s.\nYour balance is %.2f.",
                             client_account->name,client_account->balance);
                     break;
                 case EXIT:
-                    response.code = SUCCESS;
-                    sprintf(response.message,"Exit acknowledged and account session closed.");
+                    
+                    set_response(&response,SUCCESS,
+                            "Exit acknowledged and account session closed.");
                     account_set_in_session(client_account,NOT_IN_SESSION);
                     client_account = NULL; 
                     break;
                 case FINISH:
-                    response.code = SUCCESS;
                     account_set_in_session(client_account,NOT_IN_SESSION);
-                    sprintf(response.message,"Account session closed.");
+                    set_response(&response,SUCCESS,"Account session closed.");
                     client_account = NULL;
                     break;
                default:
