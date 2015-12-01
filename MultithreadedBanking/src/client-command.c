@@ -152,11 +152,10 @@ void* command_subroutine(void* arg){
         }
         TKDestroy(tk);
         if(request.code ==ntohl(EXIT)){
-            printf("Exit.\n");
             break;
-        }else
+        }else{
             printf(PROMPT);
-
+        }
     } 
     close(client_socket_fd);
     pthread_exit(NULL);

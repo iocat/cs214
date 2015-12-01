@@ -10,7 +10,7 @@
 
 // As there are maximum 20 bank accounts. There are no need
 // for more than 20 concurrent clients
-#define MAX_CLIENT 20
+#define MAX_CLIENT 1000
 
 /* A thread info struct for the session thread */
 typedef struct session_thread_info_t{

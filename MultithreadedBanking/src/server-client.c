@@ -157,7 +157,7 @@ void* client_subroutine(void* arg){
                     break;
                 case EXIT:
                     response.code = SUCCESS;
-                    sprintf(response.message,"Exit acknowledged.\nAccount session closed.");
+                    sprintf(response.message,"Exit acknowledged and account session closed.");
                     account_set_in_session(client_account,NOT_IN_SESSION);
                     client_account = NULL; 
                     break;
@@ -194,6 +194,7 @@ void* client_subroutine(void* arg){
 
     close(client_socket_fd);
 
+    // Free the thread index in the thread array
     pthread_mutex_lock(client_thread_arg->thread_check_mutex_ptr);
     memset(client_thread_arg->this_thread_ptr, 0 , sizeof(pthread_t));
     pthread_mutex_unlock(client_thread_arg->thread_check_mutex_ptr);

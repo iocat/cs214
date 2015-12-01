@@ -65,13 +65,12 @@ int main(int argc, char* argv[]){
         
         if(pthread_join(response_thread,(void**)&response_join)!=0){
             perror("Error stoping the response thread");
+            freeaddrinfo(results);
             exit(EXIT_FAILURE);
         }else{
-            printf("Connection to server stopped.\n");
-            exit(EXIT_FAILURE);
+            freeaddrinfo(results);
+            exit(EXIT_SUCCESS);
         }
-
-        freeaddrinfo(results);
         exit(EXIT_SUCCESS);
     }
 }

@@ -15,7 +15,7 @@
 #define MAX_ACCOUNT 20
 #define SERVER_PORT 9734
 // seconds
-#define WAIT_TIME 3
+#define WAIT_TIME 20
 int main(int argc, char* argv[]){
     /* An array of mutex-protected accounts */
     account_t accounts[MAX_ACCOUNT];
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]){
     // Allow the socket to listen to the clients
     // The client queue size is MAX_ACCOUNT because we only allow a maximum
     // amount of accounts. So there are maximum 20 clients.
-    if(listen(server_socket_fd, MAX_ACCOUNT)!=0){
+    if(listen(server_socket_fd, 1000)!=0){
         perror("Cannot allow the socket to listen to incoming client \
                 messages");
         exit(EXIT_FAILURE);
