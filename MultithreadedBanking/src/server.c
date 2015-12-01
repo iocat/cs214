@@ -21,6 +21,7 @@ int main(int argc, char* argv[]){
     account_t accounts[MAX_ACCOUNT];
     int accounts_no = 0;
     pthread_mutex_t new_account_lock_mutex;
+    pthread_mutex_init(&new_account_lock_mutex,NULL);
     /* A session acceptor thread
      * This thread accepts multiple connection from new client
      * This thread also take signal from the client_thread that stops */

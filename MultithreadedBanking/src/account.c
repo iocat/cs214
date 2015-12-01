@@ -1,6 +1,7 @@
 #include "account.h"
 #include <string.h>
 void account_open( account_t* account,char* name){
+    pthread_mutex_init(&(account->account_mutex),NULL);
     pthread_mutex_lock(&(account->account_mutex));
     strncpy( account->name, name, NAME_MAX_LENGTH);
     account->balance = 0.0;
