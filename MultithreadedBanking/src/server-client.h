@@ -1,29 +1,29 @@
 /*
- *  server-client.h contains client thread handling function
+ *  server-client.h contains client code
  */
-#ifndef SERVER_CLIENT_H
-#define SERVER_CLIENT_H
-#include <pthread.h>
-#include "account.h"
-/* Thread info struct for client-service threads */
-typedef struct client_thread_info_t{
-    int client_socket_fd;    
-    struct sockaddr_in* client_addr_ptr;
-    int client_addr_len; 
+#ifndef _SERVER_CLIENT_H_
+#define _SERVER_CLIENT_H_
 
-    account_t* accounts;
-    account_t* client_account;
-    int* accounts_no_ptr;
-    int accounts_max;
-     
-    // Point to the current thread data.
-    // Set this to 0 before exit
-    pthread_t* this_thread_ptr;
-    
-    /* Mutex lock when free this account thread  from the thread pool */
-    pthread_mutex_t* thread_check_mutex_ptr;
-    pthread_mutex_t* new_account_lock_mutex_ptr;
-} client_thread_info_t;
-void* client_subroutine(void*);
+// An abstrct struct for sharing data between the session process and
+// the client process 
+typedef struct session_client_t{
+    // The socket file descriptor of the client retrieved from accept
+    int client_fd;    
+    // A pointer to the new account lock mutex
+    pthread_mutex_t* new_account_lock_mutex; 
+} session_client_t;
+
+// set_up_client_shared_mem sets up the sharing memory between the 
+// session and the client processes
+//
+// NULL is returned if the function fails to create a shared memory
+session_client_t* set_up_client_shared_mem(int* fd,int client_no);
+
+// release_client_shared_mem unmaps the shared memory between the session
+// and the client processes and close the shared file
+void release_client_shared_mem(session_client_t* share,int fd);
+
+// The client code 
+void client(session_client_t* ses_cli);
 
 #endif
