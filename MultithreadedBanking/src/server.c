@@ -16,7 +16,6 @@
 #define SERVER_PORT 9734
 // seconds
 #define WAIT_TIME 20
-#define MAX_PENDING_CLIENT 1000
 
 void print_account(server_session_t* ser_ses,int* server_stop){
     // PRINT BANK ACCOUNT EVERY WAIT_TIME seconds  
@@ -88,7 +87,7 @@ int main(int argc, char* argv[]){
         exit(EXIT_FAILURE);
     }
     // Allow the socket to listen to the clients
-    if(listen(server_socket_fd, MAX_PENDING_CLIENT)!=0){
+    if(listen(server_socket_fd, MAX_CLIENT)!=0){
         perror("Cannot allow the socket to listen to incoming client \
                 messages");
         exit(EXIT_FAILURE);
@@ -101,17 +100,20 @@ int main(int argc, char* argv[]){
     // The server session share memory pointer ( to be mapped)
     server_session_t* ser_ses;
     ser_ses = (server_session_t*) set_up_session_shared_mem(&ser_ses_fd);
-    
+    if(ser_ses == NULL){
+        exit(EXIT_FAILURE);
+    }    
     int child_pid;
     int server_stop = 0;
     if((child_pid = fork()) == 0){
         // The child/session process
         session(ser_ses,server_socket_fd); 
-    else{
+    }else{
+        int exit_status;
         // The parent process -> print account. and collect the child process
-        print_account(server_session_t* ser_ses,&server_stop); 
+        print_account(ser_ses,&server_stop); 
         // when receives the stop signal, we wait for the session process
-        wait(child_pid);
+        wait(&exit_status);
         release_session_shared_mem(ser_ses,ser_ses_fd);
     } 
     exit(EXIT_SUCCESS);

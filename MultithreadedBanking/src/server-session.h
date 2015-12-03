@@ -5,7 +5,8 @@
  */
 #ifndef _SERVER_SESSION_H_
 #define _SERVER_SESSION_H_
-
+#include "account.h"
+#define MAX_CLIENT 1000
 // An abstract struct for sharing data between the server process and 
 // the session process
 typedef struct server_session_t{

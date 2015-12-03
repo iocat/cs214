@@ -5,6 +5,7 @@
 #define REQUEST_MES_LENGTH 101
 #define RESPONSE_MES_LENGTH 300
 #define AMOUNT_SIZE 100
+#define MAX_ACCOUNT 20
 enum response_error_code_t{
         SUCCESS,
         CANNOT_OPEN,
