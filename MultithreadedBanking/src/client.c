@@ -22,6 +22,7 @@ int main(int argc, char* argv[]){
         command_arg_t command_arg;
         response_arg_t response_arg;
         int response_join;
+        int command_join;
         /* Get the address info of the server to be connected */
         memset(&hints,0,sizeof hints);
         hints.ai_family = AF_INET;
@@ -65,12 +66,17 @@ int main(int argc, char* argv[]){
         
         if(pthread_join(response_thread,(void**)&response_join)!=0){
             perror("Error stoping the response thread");
+            close(client_socket_fd);
             freeaddrinfo(results);
             exit(EXIT_FAILURE);
-        }else{
-            freeaddrinfo(results);
-            exit(EXIT_SUCCESS);
         }
+        if(pthread_join(command_thread,(void**) &command_join)!=0){
+            perror("Error joining the command thread");
+            close(client_socket_fd);
+            freeaddrinfo(results);
+            exit(EXIT_FAILURE);
+        }
+        freeaddrinfo(results);
         exit(EXIT_SUCCESS);
     }
 }

@@ -37,7 +37,7 @@ void* client_subroutine(void* arg){
     request_t request;
     response_t response;
 
-    struct timeval timeout  ={ 1200, 0 }; /* wait 20 minutes till timeout */
+    struct timeval timeout  ={ 5000, 0 }; /* wait 20 minutes till timeout */
     fd_set read_fd_set;
     FD_ZERO(&read_fd_set); 
     FD_SET(client_socket_fd, &read_fd_set);
@@ -48,6 +48,7 @@ void* client_subroutine(void* arg){
                     &timeout))>0){
         /* Read the request from client */
         byte_read = read(client_socket_fd, &request, sizeof(request_t));
+        request.code = ntohl(request.code) ;
         if(byte_read == 0){
             printf("Connection with client (socket id %d) is closed.\n",client_socket_fd);
             if(client_account != NULL){
@@ -58,7 +59,7 @@ void* client_subroutine(void* arg){
         }
         // Not in customer session 
         if(client_account == NULL || !account_is_in_session(client_account)){
-            switch (ntohl(request.code)){
+            switch (request.code){
             case OPEN:
                 pthread_mutex_lock(new_account_lock_mutex_ptr);
                 if(*accounts_no_ptr == accounts_max){
@@ -101,7 +102,7 @@ void* client_subroutine(void* arg){
                         pthread_mutex_unlock(&(accounts[index].account_mutex));
                         client_account = &accounts[index];
                         account_set_in_session(client_account,IN_SESSION);
-                        response.code = htonl(SUCCESS);
+                        set_response(&response,SUCCESS,"");
                         sprintf(response.message,"Account %s in session.",
                                 client_account->name);
                     }
@@ -109,7 +110,7 @@ void* client_subroutine(void* arg){
                 pthread_mutex_unlock(new_account_lock_mutex_ptr);
                 break;
             case EXIT:
-                set_response(&response,SUCCESS,"Exit acknowledged.");
+                set_response(&response,ACCOUNT_EXIT,"Exit acknowledged.");
                 break;
             default:
                 set_response(&response,CLIENT_NOT_IN_SESSION,"You must start"\
@@ -120,7 +121,7 @@ void* client_subroutine(void* arg){
         }else{
             int result = 0;
             float amount = 0.0;
-            switch(ntohl(request.code)){
+            switch(request.code){
                 case OPEN:
                     set_response(&response,CANNOT_OPEN,"Please finish the current"\
                             " session before opening a new account.");
@@ -130,16 +131,16 @@ void* client_subroutine(void* arg){
                             "Please finish the current"\
                             " session before using a new bank account.");
                     break;
-                case DEBIT:
+                case CREDIT:
                     amount = atof(request.message.amount);
-                    account_debit(client_account,amount);
+                    account_credit(client_account,amount);
                     set_response(&response,SUCCESS,"");
-                    sprintf(response.message,"Successfully debit $%.2f.",
+                    sprintf(response.message,"Successfully credit $%.2f.",
                             amount);
                     break;
-                case CREDIT:
+                case DEBIT:
                     amount =atof(request.message.amount);
-                    result = account_credit(client_account,amount);
+                    result = account_debit(client_account,amount);
                     response.code = result;
                     set_response(&response,result,"");
                     if(result == BALANCE_REACH_ZERO){
@@ -147,7 +148,7 @@ void* client_subroutine(void* arg){
                                 "Your balance is: $%.2f",
                                 client_account->balance);
                     }else if( result == SUCCESS){
-                        sprintf(response.message,"Successfully credit $%.2f.",
+                        sprintf(response.message,"Successfully dedit $%.2f.",
                                 amount);
                     }
                     break;
@@ -157,8 +158,7 @@ void* client_subroutine(void* arg){
                             client_account->name,client_account->balance);
                     break;
                 case EXIT:
-                    
-                    set_response(&response,SUCCESS,
+                    set_response(&response,ACCOUNT_EXIT,
                             "Exit acknowledged and account session closed.");
                     account_set_in_session(client_account,NOT_IN_SESSION);
                     client_account = NULL; 
@@ -169,8 +169,7 @@ void* client_subroutine(void* arg){
                     client_account = NULL;
                     break;
                default:
-                    response.code = SUCCESS;
-                    strcpy(response.message,"Not a valid request.");
+                    set_response(&response, SUCCESS,"Not a valid request.");
                     break;
             }    
         }
@@ -184,8 +183,7 @@ void* client_subroutine(void* arg){
         if(client_account != NULL){
             account_set_in_session(client_account, NOT_IN_SESSION);
             client_account = NULL;
-            response.code = CONNECTION_TIME_OUT;
-            strcpy(response.message, "Connection time out.");
+            set_response(&response,CONNECTION_TIME_OUT,"Connection time out.");
             while(write(client_socket_fd, &response, sizeof(response_t))<0){
                 printf("Error writting to the client socket %d\n",client_socket_fd);
                 continue;

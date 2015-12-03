@@ -41,7 +41,22 @@ char getch_(int echo) {
     return ch;
 }
 
+void set_request (request_t* request, int code, char* message){
+    request->code = htonl(code);
+    switch(code){
+    case OPEN:
+    case START:
+        strcpy(request->message.name,message);
+        break;
+    case CREDIT:
+    case DEBIT:
+        strcpy(request->message.amount,message);
+        break;
+    }   
+}
 void* command_subroutine(void* arg){
+    // Reset the terminal when exiting 
+   // atexit(resetTermios);
     command_arg_t* command_arg = (command_arg_t*) arg;
     int client_socket_fd = command_arg->client_socket_fd;
     char user_input[200];
@@ -63,8 +78,7 @@ void* command_subroutine(void* arg){
                 printf(INVALID_CMD);
             }else{
                 if(strlen(token)<= NAME_MAX_LENGTH-1){
-                    request.code = htonl(OPEN);
-                    strcpy(request.message.name,token);
+                    set_request(&request,OPEN,token);
                     valid_command = 1;
                 }else{
                     printf("The name length is invalid.\n");
@@ -79,8 +93,7 @@ void* command_subroutine(void* arg){
                 printf("%s\n",INVALID_CMD);
             }else{
                 if(strlen(token)<=NAME_MAX_LENGTH-1){
-                    request.code = htonl(START);
-                    strcpy(request.message.name,token);
+                    set_request(&request,START,token);
                     valid_command = 1;
                 }else{
                     printf("The name length is invalid.\n");
@@ -93,8 +106,7 @@ void* command_subroutine(void* arg){
             if(token== NULL){
                 printf("%s\n",INVALID_CMD);
             }else if(TKGetType(tk)==FLOAT || TKGetType(tk)==DEC) {
-                request.code = htonl(CREDIT);
-                strcpy(request.message.amount,token);
+                set_request(&request,CREDIT,token);
                 valid_command = 1;
                 free(token);
             }
@@ -104,8 +116,7 @@ void* command_subroutine(void* arg){
             if(token== NULL){
                 printf("%s\n",INVALID_CMD);
             }else if(TKGetType(tk)==FLOAT || TKGetType(tk)==DEC){
-                request.code = htonl(DEBIT);
-                strcpy(request.message.amount,token);
+                set_request(&request,DEBIT,token);
                 valid_command = 1;
                 free(token);
             }else{
@@ -114,15 +125,15 @@ void* command_subroutine(void* arg){
             } 
         }else if(strcmp(token,"balance")==0){
             free(token);
-            request.code = htonl(BALANCE);
+            set_request(&request,BALANCE,NULL);
             valid_command=1;
         }else if(strcmp(token,"finish")==0){
             free(token);
-            request.code = htonl(FINISH);
+            set_request(&request,FINISH,NULL);
             valid_command=1;
         }else if(strcmp(token,"exit")==0){
             free(token);
-            request.code = htonl(EXIT);
+            set_request(&request,EXIT,NULL);
             valid_command = 1;
         }else if(strcmp(token,"help")==0){
             free(token);
@@ -144,20 +155,19 @@ void* command_subroutine(void* arg){
                 free(token); 
             }else{
                 write(client_socket_fd,(void*)&request,sizeof( request_t));
-                initTermios(TERMIOS_NON_ECHO);
-                sleep(WAIT_TIME);
-                lseek(0,0,SEEK_END);
-                resetTermios();
+               // initTermios(TERMIOS_NON_ECHO);
+                if(request.code !=htonl(EXIT))
+                    sleep(WAIT_TIME);
+                //resetTermios();
             }
         }
         TKDestroy(tk);
-        if(request.code ==ntohl(EXIT)){
+        if(request.code == htonl(EXIT)){
             break;
         }else{
             printf(PROMPT);
         }
     } 
-    close(client_socket_fd);
     pthread_exit(NULL);
 }
 

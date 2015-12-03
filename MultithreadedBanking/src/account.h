@@ -12,7 +12,8 @@ enum response_error_code_t{
         CLIENT_NOT_IN_SESSION,
         ACCOUNT_UNFOUND,
         BALANCE_REACH_ZERO,
-        CONNECTION_TIME_OUT
+        CONNECTION_TIME_OUT,
+        ACCOUNT_EXIT
 };
 typedef struct response_t{
     int code;
@@ -24,7 +25,7 @@ enum client_request_code_t{
         OPEN ,
         START ,
         CREDIT,
-        DEBIT ,
+        DEBIT,
         BALANCE ,
         FINISH ,
         EXIT
@@ -45,8 +46,8 @@ typedef struct account_t{
 } account_t;
 
 void account_open( account_t* account,char* name);
-int account_credit(account_t* account, float credit_amount);
-void account_debit(account_t* account, float debit_amount);
+int account_debit(account_t* account, float credit_amount);
+void account_credit(account_t* account, float debit_amount);
 float account_balance( account_t* account);
 int account_is_in_session(account_t* account);
 void account_set_in_session(account_t* account,int session_code);

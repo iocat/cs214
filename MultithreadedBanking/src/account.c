@@ -8,20 +8,20 @@ void account_open( account_t* account,char* name){
     account->in_session = NOT_IN_SESSION;
     pthread_mutex_unlock(&(account->account_mutex));
 }
-int account_credit(account_t* account, float credit_amount){
+int account_debit(account_t* account, float debit_amount){
     pthread_mutex_lock(&(account->account_mutex));
-    if(account->balance-credit_amount<0){
+    if(account->balance-debit_amount<0){
         pthread_mutex_unlock(&(account->account_mutex));
         return BALANCE_REACH_ZERO;
     }else{
-        account->balance-=credit_amount;
+        account->balance-=debit_amount;
         pthread_mutex_unlock(&(account->account_mutex));
         return SUCCESS;
     }
 }
-void account_debit(account_t* account, float debit_amount){
+void account_credit(account_t* account, float credit_amount){
     pthread_mutex_lock(&(account->account_mutex));
-    account->balance+=debit_amount;
+    account->balance+=credit_amount;
     pthread_mutex_unlock(&(account->account_mutex));
 }
 float account_balance( account_t* account){
