@@ -156,8 +156,12 @@ void* command_subroutine(void* arg){
             }else{
                 write(client_socket_fd,(void*)&request,sizeof( request_t));
                // initTermios(TERMIOS_NON_ECHO);
-                if(request.code !=htonl(EXIT))
-                    sleep(WAIT_TIME);
+                if(request.code !=htonl(EXIT)){
+                    unsigned int sleep_time = WAIT_TIME;
+                    while((sleep_time=sleep(sleep_time))!=0){
+                        continue;
+                    }
+                }
                 //resetTermios();
             }
         }
