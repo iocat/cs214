@@ -52,4 +52,9 @@ void account_credit(account_t* account, float debit_amount);
 float account_balance( account_t* account);
 int account_is_in_session(account_t* account);
 void account_set_in_session(account_t* account,int session_code);
+// listen_request reads incoming request from the socket fd
+int listen_request(request_t* request, int socket_fd);
+void form_response(response_t* response, int code, char* message);
+
+
 #endif

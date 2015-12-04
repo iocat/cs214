@@ -18,15 +18,16 @@ void init_session_shared_mem(server_session_t* share){
 
 server_session_t* set_up_session_shared_mem(int* fd){
     server_session_t* mapped_data;
-    *fd = open(SERVER_SESSION_SHARE_FILE,O_CREAT | O_TRUNC );
+    *fd = open(SERVER_SESSION_SHARE_FILE, O_TRUNC | O_RDWR | O_CREAT,0666);
     if (*fd <0){
-        perror("Cannot open file for sharing memory between SERVER and SESSION.");
+        perror("Cannot open file for sharing memory between SERVER and SESSION");
         return NULL;
     }
+    ftruncate(*fd,sizeof(server_session_t));
     mapped_data =(server_session_t*) mmap(NULL,sizeof(server_session_t),
-            PROT_READ | PROT_WRITE,MAP_SHARED,*fd,0);
+            PROT_READ | PROT_WRITE,MAP_FILE | MAP_SHARED,*fd,0);
     if(mapped_data == MAP_FAILED){
-        perror("Cannot map the data to the file.");
+        perror("Cannot map the data to the file");
         return NULL;
     }else{
         init_session_shared_mem(mapped_data);
@@ -60,14 +61,15 @@ void* client_collect(void* arg){
 void session(server_session_t* ser_ses, int server_socket_fd){
     while (1){
         int client_socket_fd;
-        struct sockaddr client_addr;
+        struct sockaddr_in client_addr;
         socklen_t sock_len;
         // Accept connection from the client
-        if((client_socket_fd=accept(server_socket_fd,&client_addr,
-                        &sock_len))!=0){
+        if((client_socket_fd=accept(server_socket_fd,(struct sockaddr*)&client_addr,
+                        &sock_len))<0){
             perror("Cannot accept one client connection");
         }else{
             int client_pid;
+            printf("One client connected ( fd = %d ).\n",client_socket_fd);
             if((client_pid = fork())==0){
                 // The child/client process 
                 client_t client_data;
@@ -77,16 +79,18 @@ void session(server_session_t* ser_ses, int server_socket_fd){
                     &(ser_ses->new_account_lock_mutex);
                 client(&client_data,client_socket_fd);
             }else{
+                printf("Process %d created to handle client %d.\n",client_pid,
+                        client_socket_fd);
+                pthread_t new_thread;
                 // The session process line of execution
-                 pthread_t client_collector;
                  client_collector_t* cc_arg = (client_collector_t*)
                      malloc(sizeof(client_collector_t));
                  cc_arg->client_socket_fd = client_socket_fd;
                  cc_arg->client_pid = client_pid;
                  // Create client collector thread
-                 pthread_create(&client_collector,NULL,client_collect,(void*)cc_arg);
+                 pthread_create(&new_thread,NULL,client_collect,(void*)cc_arg);
             }
         }
     }
-
+    exit(EXIT_SUCCESS);
 }

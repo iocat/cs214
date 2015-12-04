@@ -21,7 +21,7 @@ void print_account(server_session_t* ser_ses,int* server_stop){
     // PRINT BANK ACCOUNT EVERY WAIT_TIME seconds  
     // while the server does not stop
     int time_to_sleep_left;
-    while(!(*server_stop)){
+    while(*server_stop==0){
         time_to_sleep_left = WAIT_TIME;
         // Damn, you have to sleep with the a amount of time!!
         while((time_to_sleep_left = sleep(time_to_sleep_left))!=0){
