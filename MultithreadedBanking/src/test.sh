@@ -58,6 +58,4 @@ do
 done
 sleep 21
 
-cat $TEST_RESULT
-
 killall $SERVER

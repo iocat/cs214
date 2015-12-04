@@ -4,9 +4,9 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
-
-#include <pthread.h>
+#include <signal.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
@@ -17,15 +17,16 @@
 // seconds
 #define WAIT_TIME 20
 
-void print_account(server_session_t* ser_ses,int* server_stop){
+void print_account(server_session_t* ser_ses){
     // PRINT BANK ACCOUNT EVERY WAIT_TIME seconds  
     // while the server does not stop
     int time_to_sleep_left;
-    while(*server_stop==0){
+    while(1){
         time_to_sleep_left = WAIT_TIME;
         // Damn, you have to sleep with the a amount of time!!
-        while((time_to_sleep_left = sleep(time_to_sleep_left))!=0){
-            continue;
+        sleep(WAIT_TIME);
+        if(ser_ses->stop_signal==1){
+            break;
         }
         pthread_mutex_lock(&(ser_ses->new_account_lock_mutex)); 
         int temp = 0 ;
@@ -55,9 +56,14 @@ void print_account(server_session_t* ser_ses,int* server_stop){
     }
 }
 
-
+server_session_t* g_ser_ses;
+int g_ser_ses_fd;
+void signal_handler(int signo){
+    g_ser_ses->stop_signal = 1;
+}
 
 int main(int argc, char* argv[]){
+    
     /* SERVER SET UP */
     int enable_reuse_socket = 1;
     struct sockaddr_in server_address;
@@ -100,21 +106,27 @@ int main(int argc, char* argv[]){
     // The server session share memory pointer ( to be mapped)
     server_session_t* ser_ses;
     ser_ses = (server_session_t*) set_up_session_shared_mem(&ser_ses_fd);
-    if(ser_ses == NULL){
-        exit(EXIT_FAILURE);
-    }    
+    printf("Successfully set up shared memory.\n");
+    g_ser_ses = ser_ses;
+    g_ser_ses_fd = ser_ses_fd;
+
+
     int child_pid;
-    int server_stop = 0;
     if((child_pid = fork()) == 0){
         // The child/session process
         session(ser_ses,server_socket_fd); 
     }else{
-        int exit_status;
+        if(signal(SIGINT,signal_handler) == SIG_ERR){
+            perror("Cannot set up signal handler.");
+            exit(EXIT_FAILURE);
+        }
+        printf("Created the session process ( pid = %d).\n",child_pid);
         // The parent process -> print account. and collect the child process
-        print_account(ser_ses,&server_stop); 
-        // when receives the stop signal, we wait for the session process
-        wait(&exit_status);
-        release_session_shared_mem(ser_ses,ser_ses_fd);
+        print_account(ser_ses);
+        printf("Stop the session process.\n");
+        // After receiving the signal, we kill our children.
+        kill(child_pid,SIGINT);
+        release_session_shared_mem(g_ser_ses,g_ser_ses_fd);
     } 
     exit(EXIT_SUCCESS);
     // PROGRAM ENDS HERE

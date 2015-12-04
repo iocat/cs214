@@ -16,6 +16,8 @@ typedef struct server_session_t{
     int accounts_no;
     // The mutex to lock creating a new account
     pthread_mutex_t new_account_lock_mutex;
+    // Stop signal 
+    int stop_signal;
 }server_session_t;
 
 // set_up_session_shared_mem sets up the file containing the shared memory

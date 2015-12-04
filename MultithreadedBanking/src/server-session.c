@@ -1,6 +1,7 @@
 #include "server-session.h"
 #include "server-client.h"
 #include <arpa/inet.h>
+#include <sys/wait.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -23,7 +24,7 @@ server_session_t* set_up_session_shared_mem(int* fd){
         perror("Cannot open file for sharing memory between SERVER and SESSION");
         return NULL;
     }
-    ftruncate(*fd,sizeof(server_session_t));
+    ftruncate(*fd,sizeof(server_session_t)+1);
     mapped_data =(server_session_t*) mmap(NULL,sizeof(server_session_t),
             PROT_READ | PROT_WRITE,MAP_FILE | MAP_SHARED,*fd,0);
     if(mapped_data == MAP_FAILED){
@@ -39,6 +40,7 @@ void release_session_shared_mem(server_session_t* share,int fd){
     if(munmap(share,sizeof(server_session_t))!=0){
         perror("Cannot unmap the share data between server and session.");
     }
+    printf("Released shared memory.\n");
     close(fd);
 }
 
@@ -51,15 +53,18 @@ void* client_collect(void* arg){
     client_collector_t* cc_arg = (client_collector_t*) arg;
     int exit_stt;
     waitpid(cc_arg->client_pid,&exit_stt,WUNTRACED); 
+    // Close the client socket
     close(cc_arg->client_socket_fd);
     printf("Connection with client ( fd = %d ) is closed.\n",
             cc_arg->client_socket_fd);
+    // Free the allocated argument
     free(arg);
+    printf("Collect and destroy child process %d.\n",cc_arg->client_pid);
     pthread_exit(NULL);
 }
 
 void session(server_session_t* ser_ses, int server_socket_fd){
-    while (1){
+    while (ser_ses->stop_signal==0){
         int client_socket_fd;
         struct sockaddr_in client_addr;
         socklen_t sock_len;
@@ -79,7 +84,7 @@ void session(server_session_t* ser_ses, int server_socket_fd){
                     &(ser_ses->new_account_lock_mutex);
                 client(&client_data,client_socket_fd);
             }else{
-                printf("Process %d created to handle client %d.\n",client_pid,
+                printf("Create process %d to handle client %d.\n",client_pid,
                         client_socket_fd);
                 pthread_t new_thread;
                 // The session process line of execution
