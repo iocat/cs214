@@ -39,7 +39,6 @@ void print_account(server_session_t* ser_ses){
             for(temp = 0; temp <ser_ses->accounts_no; temp++){
                 // Lock the account for reading
                 account_t* account = &(ser_ses->accounts[temp]);
-                pthread_mutex_lock(&(account->account_mutex));
                 printf("%9d",temp+1);
                 printf("%50s",account->name);
                 printf("%10.2f ",account->balance);
@@ -48,7 +47,6 @@ void print_account(server_session_t* ser_ses){
                 }else if(account->in_session == NOT_IN_SESSION){
                     printf("%13s","NO");
                 }
-                pthread_mutex_unlock(&(account->account_mutex));
                 printf("\n");
             }
         }
@@ -127,6 +125,7 @@ int main(int argc, char* argv[]){
         // After receiving the signal, we kill our children.
         kill(child_pid,SIGINT);
         release_session_shared_mem(g_ser_ses,g_ser_ses_fd);
+        close(server_socket_fd);
     } 
     exit(EXIT_SUCCESS);
     // PROGRAM ENDS HERE

@@ -57,9 +57,9 @@ void* client_collect(void* arg){
     close(cc_arg->client_socket_fd);
     printf("Connection with client ( fd = %d ) is closed.\n",
             cc_arg->client_socket_fd);
+    printf("Collect and destroy child process %d.\n",cc_arg->client_pid);
     // Free the allocated argument
     free(arg);
-    printf("Collect and destroy child process %d.\n",cc_arg->client_pid);
     pthread_exit(NULL);
 }
 

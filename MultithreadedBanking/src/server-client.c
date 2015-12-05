@@ -20,11 +20,17 @@ int search_account(account_t* accounts, int account_no, char* name){
         return index;
     }
 }
+void session_start(account_t* account){
+    pthread_mutex_lock(&account->account_session_mutex);
+
+}
 void client_open(response_t* response,client_t* c,char* name){
    int index;
    pthread_mutex_lock( c->new_account_lock_mutex_ptr);
    if(*c->accounts_no_ptr == MAX_ACCOUNT){
         form_response(response,CANNOT_OPEN,"Database is full.");
+        pthread_mutex_unlock(c->new_account_lock_mutex_ptr);
+        return;
    }else{
         index = search_account(c->accounts,*c->accounts_no_ptr,name);
         if(index == -1){
@@ -37,7 +43,6 @@ void client_open(response_t* response,client_t* c,char* name){
             account_open(&c->accounts[index],name);
         }
         (*c->accounts_no_ptr)++;
-
    }
    pthread_mutex_unlock(c->new_account_lock_mutex_ptr);
    char message [200];
@@ -46,37 +51,38 @@ void client_open(response_t* response,client_t* c,char* name){
 }
 
 void client_start(response_t* response,client_t* c,account_t** cli_acc 
-        ,char* name){
+        ,char* name,int client_sock_fd){
     int index;
-    pthread_mutex_lock(c->new_account_lock_mutex_ptr);
-    index = search_account(c->accounts,*c->accounts_no_ptr,name);
-    if(index == -1 || index == *c->accounts_no_ptr){
-        form_response(response,CANNOT_START,"Account is not found.");
-    }else{
-        account_t* account = & c->accounts[index];
-        int in_session = 0;
-        pthread_mutex_lock(&account->account_mutex);
-        if(account->in_session == IN_SESSION){
-            in_session = 1;
-        }else{
-            in_session = 0;
-            account->in_session = IN_SESSION;
-        }
-        pthread_mutex_unlock(&account->account_mutex);
+    account_t* account;
+    int accounts_no;
 
-        if(in_session){
-            form_response(response,CANNOT_START,"Requested account has been"\
-                    " started on another session");
-        }else{
-            *cli_acc = account;
-            char message [200];
-            sprintf(message,"Account %s is in session.",name);
-            form_response(response,SUCCESS,message);
-        }
-    }
+    pthread_mutex_lock(c->new_account_lock_mutex_ptr);
+    accounts_no = *c->accounts_no_ptr;
     pthread_mutex_unlock(c->new_account_lock_mutex_ptr);
+    
+    index = search_account(c->accounts,accounts_no,name);
+    if(index == -1 || index == accounts_no){
+        form_response(response,CANNOT_START,"Account is not found.");
+        return;
+    }else{
+        account = & c->accounts[index];
+        while(pthread_mutex_trylock(&account->account_session_mutex)!=0){
+            form_response(response,SUCCESS,"Waiting to start customer session.");
+            write(client_sock_fd,response,sizeof(response_t));
+            sleep(2);
+        } 
+    }
+    *cli_acc = account;
+    account->in_session = IN_SESSION;
+    char message [200];
+    sprintf(message,"Account %s is in session.",name);
+    form_response(response,SUCCESS,message);
 }
 
+void set_not_in_session(account_t* account){
+    account->in_session = NOT_IN_SESSION;
+    pthread_mutex_unlock(&account->account_session_mutex);
+}
 void client_debit(response_t* response,account_t* account, char* amount){
     char message[100];
     int result = account_debit(account,atof(amount));
@@ -116,7 +122,7 @@ void client(client_t* client_dat,int client_sock_fd){
         if(byte_read == 0){
             // Client closed connection unexpectedly. (not manually)
             if(client_account != NULL){
-                account_set_in_session(client_account, NOT_IN_SESSION);
+                set_not_in_session(client_account);
                 client_account = NULL;
             }
             break;
@@ -130,7 +136,7 @@ void client(client_t* client_dat,int client_sock_fd){
                    break; 
                 case START:
                     client_start(&response,client_dat,&client_account
-                           ,request.message.name);            
+                           ,request.message.name,client_sock_fd);            
                     break;
                 case EXIT:
                     form_response(&response,ACCOUNT_EXIT,"Exit acknowledged.");
@@ -160,15 +166,16 @@ void client(client_t* client_dat,int client_sock_fd){
                     form_response(&response,SUCCESS,"");
                     sprintf(response.message,"Account: %s.\nYour balance is %.2f.",
                             client_account->name,client_account->balance);
+                    break;
                 case FINISH:
-                    account_set_in_session(client_account,NOT_IN_SESSION);
+                    set_not_in_session(client_account);
                     form_response(&response,SUCCESS,"Account session closed.");
                     client_account = NULL;
                     break;
                 case EXIT:
-                    account_set_in_session(client_account,NOT_IN_SESSION);
-                    form_response(&response,SUCCESS,"Exit acknowledged and "\
-                            "Account session closed.");
+                    set_not_in_session(client_account);
+                    form_response(&response,ACCOUNT_EXIT,"Exit acknowledged and "\
+                            "account session closed.");
                     client_account = NULL;
                     break;
                 default: 
@@ -187,6 +194,7 @@ void client(client_t* client_dat,int client_sock_fd){
     }
     if(active_sockets == 0 ){
         if (client_account!=NULL){
+            set_not_in_session(client_account);
             client_account = NULL;
         }
         form_response(&response, CONNECTION_TIME_OUT,"Connection time out.");

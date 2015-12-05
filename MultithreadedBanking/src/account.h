@@ -42,7 +42,8 @@ typedef struct request_t{
 typedef struct account_t{
     char name[NAME_MAX_LENGTH];
     float balance;
-    pthread_mutex_t account_mutex;
+    // Session mutex lock
+    pthread_mutex_t account_session_mutex;
     enum {NOT_IN_SESSION=0,IN_SESSION} in_session;
 } account_t;
 
@@ -51,7 +52,6 @@ int account_debit(account_t* account, float credit_amount);
 void account_credit(account_t* account, float debit_amount);
 float account_balance( account_t* account);
 int account_is_in_session(account_t* account);
-void account_set_in_session(account_t* account,int session_code);
 // listen_request reads incoming request from the socket fd
 int listen_request(request_t* request, int socket_fd);
 void form_response(response_t* response, int code, char* message);

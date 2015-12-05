@@ -10,52 +10,55 @@ then
     make
 fi
 
-# Create the server that runs in the background
-./bank &
+echo ""
+echo "Test #1: Start the server."
+./$SERVER & 
+sleep 3
+killall $SERVER -SIGINT
+echo ""
+
+echo "Test #2: Terminate the server."
+echo "Please CTRL-C to terminate the running server and see the result"
+sleep 1
+./$SERVER
+echo ""
+
+echo "Test #3: Run the server and client on localhost"
+./$SERVER &
+./$CLIENT localhost &
+sleep 3
+killall $SERVER $CLIENT -SIGINT
+echo ""
+
+echo "Test #4: Client connects with the server running on the remote host"
+echo "Please set up the remote host on the server on another terminal (ssh)"
+echo "Then enter the remote host here: "
+read REMOTE_HOST
+./$CLIENT $REMOTE_HOST
+echo ""
+
+echo "Test #5: Terminate the server while the client is connected"
+./$SERVER &
+./$CLIENT localhost &
+sleep 2
+killall $SERVER -SIGINT
+sleep 1
+echo ""
+
+echo "Test #6: Terminate the client while the server is on."
+./$SERVER &
+./$CLIENT &
+sleep 2
+killall $CLIENT
+sleep 2
+killall $SERVER -SIGINT
 
 echo ""
-echo "Warning: The result of these test is too long and the outputs are the mixture of the server and client program."
-echo ""
-# Test 1: Try to open 21 different client accounts
-echo "Test #1: 21 different accounts"
-echo "-------------------------------------------------------"
-echo "Expected output: Database is full (when the client requests the 21 accounts)"
+echo "Test #7: Maximum number of accounts reached."
+./$SERVER &
 for i in {1..21}
 do 
     printf "open account_${i}\nexit" | ./banking localhost &
 done
-# Sleep to guarantee that the client process exits
-sleep 4
-
-# Test 2: Two clients access a same account concurrently
-echo ""
-echo "Test #2: It seems we are sharing a same account."
-echo "-------------------------------------------------------"
-echo "In this test, two accounts try to access a same account_1"
-echo "at the same time. But the server does not allow"
-echo "The expected output would be:"
-echo "Error: Requested account 'account_1' has been started on another session."
-for i in {1..3}
-do
-    echo "Try #${i}"
-    echo "-------------------------------------------------------"
-    printf "start account_1\nexit" | ./banking localhost & printf "start account_1\nexit" | ./banking localhost
-done
-
-#Test 3: 3 clients using 3 different accounts but the server still handle every
-echo ""
-echo "Test #3: Let's do a three...-client-at-the-same-time"
-echo "-------------------------------------------------------"
-echo "In this test, we have 3 clients connecting to the server concurrently"
-echo "which are account_2, account_3, account_4"
-echo "The expected result would be:"
-echo "account_2 \$20"
-echo "account_3 \$30"
-echo "account_4 \$40"
-for i in {2..4}
-do
-    printf "start account_${i}\ncredit ${i}${i}\ndebit ${i}\nexit" | ./banking localhost &
-done
-sleep 21
-
-killall $SERVER
+sleep 6
+killall $SERVER -SIGINT

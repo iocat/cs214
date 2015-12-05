@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
-#define PROMPT ">>> "
+#define PROMPT "$> "
 #define INVALID_CMD "Invalid command. Use help to get more information."
 // Wait time between 2 commands
 #define WAIT_TIME 2

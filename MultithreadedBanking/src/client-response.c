@@ -25,21 +25,21 @@ void* response_subroutine(void* arg){
         response.code = ntohl(response.code);
         // Connection is closed
         if(byte_read==0){
+            printf("Connection from the server is closed unexpectedly.\n");
             pthread_exit((void*)EXIT_SUCCESS);
         }
         // Tell the client this is an error message
         if(response.code !=SUCCESS && response.code != ACCOUNT_EXIT)
-            printf("Error: ");
+            printf("\nError: ");
         printf("%s\n",response.message);
         if (response.code == ACCOUNT_EXIT){
-            close(client_socket_fd);
             break;
         } 
     }
     // Timeout stop listening to the server. 
     // The account is no longer in session
     if(active_sockets ==0){
-        printf("Connection time out. Stop listening to the server.");
+        printf("\nConnection time out. Stop listening to the server.\n");
         pthread_exit((void*)EXIT_FAILURE);
     }
     pthread_exit((void*)EXIT_SUCCESS);

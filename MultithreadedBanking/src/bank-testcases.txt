@@ -1,0 +1,144 @@
+Test cases for the program.
+
+Test 1: Start the server
+-----------------------------------------------------------------------
+Preconditions: Has the server program named "bank"
+Input: 
+    $./bank 
+Expected output: 
+    Successfully set up shared memory.
+    Created the session process ( pid = ???? )
+
+Test 2: Terminate the server
+-----------------------------------------------------------------------
+Preconditions: The server program has started.
+Input:
+    Successfully set up shared memory.
+    Created the session process (pid = ????)
+    ^C
+Output:
+    Stop the session process.
+    Released shared memory.
+
+Test 3: Run the server and client on localhost
+-----------------------------------------------------------------------
+Preconditions: The server program runs on the localhost
+Input: 
+    $ ./banking localhost
+Expected output:
+    From the server: 
+        One client connected (fd = ?).
+        Create process ???? to handle client ?.
+    From the client:
+        Successfully connected to the server.
+
+Test 4: Client connects with the server running on the remote host
+-----------------------------------------------------------------------
+Preconditions: The server program already runs on basic.cs.rutgers.edu or
+some other remote machine
+Input:
+    # On the client machine
+    $ ./banking basic.cs.rutgers.edu # connect to the server on the basic host
+Output:
+    Like test case 3
+
+   
+Test 5: Terminate the server while the client is connected
+-----------------------------------------------------------------------
+Preconditions: Both the server and the client is connected.
+Input:
+    Server:
+        ^C or $ killall bank
+Output:
+    Server:
+        Stop the session process.
+        Released shared memory.
+    Client: 
+        Connection from the server is closed unexpectedly.
+               
+Test 6: Terminate the client while the server is on.
+-----------------------------------------------------------------------
+Preconditions: Both the client and the server is connected.
+Input: 
+    Client:
+        ^C or $ killall banking
+Output:
+    Server: 
+        Connection with client ( fd = ? ) is closed.
+        Collect and destroy child process ????.
+        ...(continues to work)
+    Client: 
+        Connection from the server is closed unexpectedly.
+
+Test 7: Maximum number of accounts reached
+-----------------------------------------------------------------------
+Preconditions: There are 20 accounts in the bank right now.
+Input: 
+    Client: open the 21st account
+Output:
+    Client:
+        Error: Cannot open the account: Database is full.
+
+Test 8: Two clients access a same account at the same time whether concurrently
+or sequentially.
+-----------------------------------------------------------------------
+Preconditions: There are at least 2 clients program connected to the server
+and at least one account
+Input: 
+    Client 1:
+        >>> start acc
+    Client 2:
+        >>> start acc
+Output:
+    One client (first come first served): 
+        Account acc in session.
+    The other:
+        Error: Requested account 'acc' has been started on another session.
+
+Test 9: Three clients access three different accounts at the same time and
+the server still handles them normally.
+-----------------------------------------------------------------------
+Preconditions: Three accounts account_1, account_2, account_3 exist
+Input:
+    Client 1:
+        start account_1
+        credit 10
+        balance
+        exit
+    Client 2: 
+        start account_1
+        credit 20
+        balance
+        exit
+    Client 3:
+        start account_3
+        credit 30
+        balance
+        exit
+Output:
+    Client 1:
+        Successfully debit $10
+        Account account_1
+        Your balance is $10
+    Client 2:
+        Successfully debit $20
+        Account account_2
+        Your balance is $20
+    Client 3:
+        Successfully debit $30
+        Account account_3
+        Your balance is $30
+    
+Test 10: The client debits an amount exceeding the balance.
+-----------------------------------------------------------------------
+Input: 
+    Client:
+        >>> open acc
+        >>> start acc
+        >>> debit 10.12
+        >>> exit
+Output:
+    Client:
+        Error: Failed to credit: Balance reached 0. Your balance is: $0.00
+
+Test 11: 

@@ -22,7 +22,6 @@ int main(int argc, char* argv[]){
         command_arg_t command_arg;
         response_arg_t response_arg;
         int response_join;
-        int command_join;
         /* Get the address info of the server to be connected */
         memset(&hints,0,sizeof hints);
         hints.ai_family = AF_INET;
@@ -31,30 +30,28 @@ int main(int argc, char* argv[]){
             printf("Cannot recognize the given server name");
             exit(EXIT_FAILURE);
         }
-        /* Create the client socket */
-        if((client_socket_fd = socket( AF_INET, SOCK_STREAM, 0))<0){
-            perror("Cannot create the client socket.");
-            exit(EXIT_FAILURE);
-        }
+        
         if(results->ai_addr == NULL){
             perror("Cannot find the given server name.");
             exit(EXIT_FAILURE);
         }
-        /* Set up the connection */
-        while(connect(client_socket_fd,results->ai_addr, 
-                    results->ai_addrlen) < 0 ){
-            printf("Cannot connect to the server. Retrying...\n");
-            sleep(WAIT_SERVER_TIME);
-            memset(&hints,0,sizeof hints);
-            hints.ai_family = AF_INET;
-            hints.ai_socktype = SOCK_STREAM;
-            freeaddrinfo(results);
-            if( getaddrinfo(argv[1],SERVER_PORT,&hints,&results) !=0){
-                printf("Cannot recognize the given server name");
+        while(1){ 
+            /* Create the client socket for every reconnection */
+            if((client_socket_fd = socket( AF_INET, SOCK_STREAM, 0))<0){
+                perror("Cannot create the client socket.");
                 exit(EXIT_FAILURE);
             }
+            /* Set up the connection */
+            if(connect(client_socket_fd,results->ai_addr, 
+                    results->ai_addrlen) < 0 ){
+                close(client_socket_fd);
+                perror("Cannot connect to the server. Retrying...");
+                sleep(WAIT_SERVER_TIME);
+            }else{
+                printf("Successfully connected to the server.\n");
+                break;
+            }
         }
-        printf("Successfully connected to the server.\n");
         
         command_arg.client_socket_fd = client_socket_fd;
         pthread_create(&command_thread,NULL,command_subroutine,
@@ -69,12 +66,8 @@ int main(int argc, char* argv[]){
             close(client_socket_fd);
             freeaddrinfo(results);
             exit(EXIT_FAILURE);
-        }
-        if(pthread_join(command_thread,(void**) &command_join)!=0){
-            perror("Error joining the command thread");
+        }else{
             close(client_socket_fd);
-            freeaddrinfo(results);
-            exit(EXIT_FAILURE);
         }
         freeaddrinfo(results);
         exit(EXIT_SUCCESS);
