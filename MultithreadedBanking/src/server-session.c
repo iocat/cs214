@@ -64,7 +64,7 @@ void* client_collect(void* arg){
 }
 
 void session(server_session_t* ser_ses, int server_socket_fd){
-    while (ser_ses->stop_signal==0){
+    while (1){
         int client_socket_fd;
         struct sockaddr_in client_addr;
         socklen_t sock_len;

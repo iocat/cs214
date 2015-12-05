@@ -17,6 +17,7 @@
 // seconds
 #define WAIT_TIME 20
 
+int server_stop_signal = 0;
 void print_account(server_session_t* ser_ses){
     // PRINT BANK ACCOUNT EVERY WAIT_TIME seconds  
     // while the server does not stop
@@ -25,7 +26,7 @@ void print_account(server_session_t* ser_ses){
         time_to_sleep_left = WAIT_TIME;
         // Damn, you have to sleep with the a amount of time!!
         sleep(WAIT_TIME);
-        if(ser_ses->stop_signal==1){
+        if(server_stop_signal==1){
             break;
         }
         pthread_mutex_lock(&(ser_ses->new_account_lock_mutex)); 
@@ -54,12 +55,13 @@ void print_account(server_session_t* ser_ses){
     }
 }
 
-server_session_t* g_ser_ses;
-int g_ser_ses_fd;
-void signal_handler(int signo){
-    g_ser_ses->stop_signal = 1;
+void server_signal_handler(int signo){
+    server_stop_signal = 1;
 }
 
+void session_signal_handler(int signo){
+    exit(EXIT_SUCCESS);
+}
 int main(int argc, char* argv[]){
     
     /* SERVER SET UP */
@@ -105,16 +107,18 @@ int main(int argc, char* argv[]){
     server_session_t* ser_ses;
     ser_ses = (server_session_t*) set_up_session_shared_mem(&ser_ses_fd);
     printf("Successfully set up shared memory.\n");
-    g_ser_ses = ser_ses;
-    g_ser_ses_fd = ser_ses_fd;
-
 
     int child_pid;
+    int wait_result;
     if((child_pid = fork()) == 0){
+        if(signal(SIGINT,session_signal_handler) == SIG_ERR){
+            perror("Cannot set up signal handler.");
+            exit(EXIT_FAILURE);
+        }
         // The child/session process
         session(ser_ses,server_socket_fd); 
     }else{
-        if(signal(SIGINT,signal_handler) == SIG_ERR){
+        if(signal(SIGINT,server_signal_handler) == SIG_ERR){
             perror("Cannot set up signal handler.");
             exit(EXIT_FAILURE);
         }
@@ -124,7 +128,8 @@ int main(int argc, char* argv[]){
         printf("Stop the session process.\n");
         // After receiving the signal, we kill our children.
         kill(child_pid,SIGINT);
-        release_session_shared_mem(g_ser_ses,g_ser_ses_fd);
+        wait(&wait_result);
+        release_session_shared_mem(ser_ses,ser_ses_fd);
         close(server_socket_fd);
     } 
     exit(EXIT_SUCCESS);

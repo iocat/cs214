@@ -30,7 +30,7 @@ void* response_subroutine(void* arg){
         }
         // Tell the client this is an error message
         if(response.code !=SUCCESS && response.code != ACCOUNT_EXIT)
-            printf("\nError: ");
+            printf("Error: ");
         printf("%s\n",response.message);
         if (response.code == ACCOUNT_EXIT){
             break;

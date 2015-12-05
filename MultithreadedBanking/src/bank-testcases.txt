@@ -93,7 +93,9 @@ Output:
     One client (first come first served): 
         Account acc in session.
     The other:
-        Error: Requested account 'acc' has been started on another session.
+        Waiting to start customer session.
+        Waiting to start customer session.
+        ...
 
 Test 9: Three clients access three different accounts at the same time and
 the server still handles them normally.
@@ -141,4 +143,16 @@ Output:
     Client:
         Error: Failed to credit: Balance reached 0. Your balance is: $0.00
 
-Test 11: 
+Test 11: Client starts without an server opened
+-----------------------------------------------------------------------
+Input: 
+    $./banking localhost
+    On another terminal 
+    $./bank
+Ouput: 
+    Cannot conenct to the server. Retrying...: Connection refused.
+    Cannot conenct to the server. Retrying...: Connection refused.
+    Cannot conenct to the server. Retrying...: Connection refused.
+    ...
+    Successfully connected to the server.
+

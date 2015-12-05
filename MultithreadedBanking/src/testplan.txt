@@ -1,0 +1,120 @@
+Test plan:
+
+All of the test cases are populated with $ ./test.sh test_no
+
+
+Test #1: Start the server
+    In this test, we try to set up the server and automatically kill it
+    To do this, we run the server as a background process and keep the terminal
+    sleep for 3 seconds to see how the server runs in the background.
+    $ ./bank &
+    $ sleep 3
+    Then we kill it by sending a SIGINT signal.
+    $ killall bank -SIGINT
+
+Test #2: Terminate the server
+    In this test we will terminate the server using ^C.
+    We run the server process in the foreground.
+    $ ./bank
+    Now the user enter CTRL + C to terminate the server.
+
+Test #3: Run the server and client on localhost
+    We test the server and client on the localhost by populating these 2 
+    processes in the background.
+    $ ./bank &
+    $ ./banking localhost &
+    Then we sleep for 3 seconds to see the server and client interact with
+    each other.
+    $ sleep 3
+    The we kill  the server and the client
+    $ killall banking
+    $ killall bank -SIGINT
+
+Test #4: Client connects with the server running on the remote host
+    This test requires the tester to open another terminal and use ssh to run
+    the server process in another computer on a machine name REMOTE_HOST.
+    After setting it up. On another terminal, we do:
+    $ read REMOTE_HOST
+    Then we run the client process to test:
+    $ ./banking $REMOTE_HOST
+
+Test #5: Terminate the server while the client is connected
+    Start the server and client connected to localhost in the background.
+    $ ./bank &
+    $ ./banking localhost &
+    Then we killed the server to see how the client reacts.
+    $ killall bank -SIGINT
+
+Test #6: Terminate the client while the server is on.
+    Like test 5, we start both processes in the background
+    $ ./bank &
+    $ ./banking localhost & 
+    Then we kill the client to see how the server reacts:
+    $ killall banking
+    We also have to kill the server after removing the client process
+    $ killall bank -SIGINT
+
+Test #7: Maximum number of accounts reached.
+    In this test, we run the server and create 21 client processes who will try
+    to open one account. The latest 21st client will receive an error message.
+    This test produces long and pretty confusing output. The notice is to be
+    made at the error message of the 21st client.
+    First, we produce the background server process:
+    $ ./bank &
+    Then we make a for loop to produce clients ( in the background ):
+    $ for i in {1..21}
+    $ do
+    $   printf "open account_${i}\nexit\n" | ./$CLIENT localhost &
+    $ done
+    Then we sleep for a while to let the clients produce messages.
+    $ sleep 10 
+    After that, we kill the server 
+    $ killall bank -SIGINT
+
+Test #8: Two clients access a same account at the same time
+    $ ./bank &
+    First we create a shared account for the 2 clients using another client
+    printf "open acc\nexit\n" | ./banking localhost
+    After that we run 2 clients who want to access that account at the same
+    time:
+    $ printf "open acc\ncredit 100\nexit\n" | ./$CLIENT localhost & printf "start acc\ncredit     100\nexit\n" | ./$CLIENT localhost &
+    Then we sleep for a while to see how they interact
+    $ sleep 5
+    After that we kill the server:
+    $ killall bank -SIGINT
+
+Test #9: Three clients access three different accounts at the same time
+    In this test, we let one client create 3 different accounts:
+    ./bank &
+    printf "open account_1\nopen account_2\nopen account_3\nexit\n" | ./banking localhost
+    Then we make a for loop to create 3 client processes where each client will
+    start each account and credit an exact amount of money. and check the balance.
+    $ for i in {1..3}; do
+    $   printf "start account_${i}\ncredit ${i}0\nbalance\nexit\n" |./banking localhost
+    $ done
+    
+    killall bank -SIGINT 
+
+Test #10: The client debits an amount exceeding the balance
+    $ ./bank &
+    
+    A new client open a bank account and did not credit at first. He chose
+    to debit some money that he does not have at the first place. Here is how
+    it happens:
+    printf "open acc\n start acc\n debit 10.12\n exit\n" | ./banking localhost
+    
+    killall bank -SIGINT
+
+Test #11: The client starts without an server opened.
+    We start the client and sleep for a while. At this time, there is no server
+    $ ./banking localhost &
+    The we sleep for 10 seconds and see that the client is waiting for the server
+    $ sleep 10
+    We then open the server to see how the client reacts:
+    $ ./bank &
+    Now we go to sleep.
+    $ sleep 2
+    
+    $ killall bank -SIGINT
+    
+    
