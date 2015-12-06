@@ -86,7 +86,7 @@ case $1 in
         do 
             printf "open account_${i}\nexit\n" | ./$CLIENT localhost &
         done
-        sleep 6
+        sleep 15
         killall $SERVER -SIGINT
 
         echo ""

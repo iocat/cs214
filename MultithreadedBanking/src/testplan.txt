@@ -67,7 +67,7 @@ Test #7: Maximum number of accounts reached.
     $   printf "open account_${i}\nexit\n" | ./$CLIENT localhost &
     $ done
     Then we sleep for a while to let the clients produce messages.
-    $ sleep 10 
+    $ sleep 15
     After that, we kill the server 
     $ killall bank -SIGINT
 
