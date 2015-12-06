@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #define TIME_OUT 5000
 #include "account.h"
+#include "reqres.h"
 #include "server-client.h"
 #include <unistd.h>
 int search_account(account_t* accounts, int account_no, char* name){
@@ -86,13 +87,13 @@ void set_not_in_session(account_t* account){
 void client_debit(response_t* response,account_t* account, char* amount){
     char message[100];
     int result = account_debit(account,atof(amount));
-    if(result == BALANCE_REACH_ZERO){
+    if(result == 0){
         sprintf(message,"Balance reached 0. Your balance is: $%.2f",
                 account->balance);
-        form_response(response,result, message);
-    }else if(result == SUCCESS){
+        form_response(response,BALANCE_REACH_ZERO, message);
+    }else if(result == 1){
         sprintf(message,"Successfully debit $%s.",amount);
-        form_response(response,result,message);
+        form_response(response,SUCCESS,message);
     }
 }
 void client_credit(response_t* response, account_t* account, char* amount){

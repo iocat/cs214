@@ -4,7 +4,7 @@
 CLIENT=banking
 SERVER=bank
 TEST_RESULT=test_result.log
-TEST_CASE_NO=10
+TEST_CASE_NO=11
 if [ ! -f $CLIENT ] || [ ! -f $SERVER ]
 then
     make
@@ -84,7 +84,7 @@ case $1 in
         ./$SERVER &
         for i in {1..21}
         do 
-            printf "open account_${i}\nexit" | ./$CLIENT localhost &
+            printf "open account_${i}\nexit\n" | ./$CLIENT localhost &
         done
         sleep 6
         killall $SERVER -SIGINT
