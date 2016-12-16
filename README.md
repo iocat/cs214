@@ -1,4 +1,4 @@
-# Rutgers_CS_214_Fall_2015
+# Rutgers' CS214 - Fall 2015
 Rutgers CS 214: Systems Programming Projects
 
 
